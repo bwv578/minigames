@@ -17,8 +17,10 @@ public class Player {
 	private HashMap<String, String> status;
 	
 	// 생성자
-	public Player() {
+	public Player(WebSocketSession session) {
 		this.name = new String();
+		this.wsSession = session;
+		this.status = new HashMap<>();
 	}
 	
 }

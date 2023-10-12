@@ -34,8 +34,7 @@
 			
 			<br><br>
 			
-			<div id="rooms">
-			</div>
+			<div id="rooms"></div>
 		</div>
 	</div>
 </body>

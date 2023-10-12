@@ -12,8 +12,8 @@ import org.springframework.web.socket.WebSocketSession;
 
 public class YahtzeeWebsocketHandler implements WebSocketHandler{
 	
-	private HashMap<WebSocketSession, Player> players = new HashMap<>(); // 웹소켓 세션으로 플레이어 구분
-	private HashMap<String, Game> games = new HashMap<>(); // 게임ID - 게임 연결 쌍	
+	volatile private HashMap<WebSocketSession, Player> players = new HashMap<>(); // 웹소켓 세션으로 플레이어 구분
+	volatile private HashMap<String, Game> games = new HashMap<>(); // 게임ID - 게임 연결 쌍	
 
 	// 모든 게임방 조회 => JSON 문자열로 반환
 	public String retrieveRooms() {
@@ -46,7 +46,7 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 		// TODO Auto-generated method stub
 		
 		// 새로운 플레이어 접속 시 플레이어 목록에 추가, 게임방 목록 전송
-		Player newPlayer = new Player();
+		Player newPlayer = new Player(session);
 		newPlayer.setName(session.getId());
 		newPlayer.setWsSession(session);
 
@@ -80,8 +80,6 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 			
 			// 클라이언트에게 게임ID 전송
 			session.sendMessage(new TextMessage("gameID@" + uuid.toString()));
-			// 클라이언트에게 갱신된 게임방 목록 전송 (테스트)
-			session.sendMessage(new TextMessage("rooms@" + retrieveRooms()));
 		}
 		
 		// 게임방에 참가요청
@@ -95,10 +93,13 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 				Player player = players.get(session);
 				
 				if(game.getPlayers().size() < 2) {
+					// 게임 시작
+					Player opponent = game.getPlayers().get(0);
+					player.setOpponent(opponent.getWsSession());
 					game.getPlayers().add(player);
-					games.put(gameID, game);
-					// 진입한 게임방 상태 전송
-					//session.sendMessage(message);
+					// 양측 플레이어에게 게임방 상태 전송
+					session.sendMessage(new TextMessage("game_status@" + game.toJSON()));
+					opponent.getWsSession().sendMessage(new TextMessage("game_status@" + game.toJSON()));
 				}else {
 					// 방이 가득 찬 경우
 					session.sendMessage(new TextMessage("full_room@"));

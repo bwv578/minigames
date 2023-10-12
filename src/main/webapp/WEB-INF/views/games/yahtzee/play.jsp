@@ -16,9 +16,10 @@
 	
 		const socket = new WebSocket("ws://localhost:8080/yahtzeeWS");
 		//const socket = new WebSocket("ws://52.78.178.113:8080/yahtzeeWS");
+		
+		let gameID = '';
 
-		document.getElementById('textBtn').onclick = function(){
-			console.log('textbtn click');	
+		document.getElementById('mkRoom').onclick = function(){	
 			socket.send('create_room@' + '임의의 방제');
 		};
 		
@@ -38,14 +39,14 @@
 
 					roomsTable += '<tr><td id="room" gameID="' + room.gameID + '">';
 					roomsTable += '<b>' + room.title + '</b>';
-					roomsTable += '&nbsp; <b id="small">플레이어 : ';
+					roomsTable += '&nbsp; <div id="roomInfo"><b id="small">플레이어 : </b> ';
 					for(let pIndex=0; pIndex<room.players.length; pIndex++){
 						if(pIndex == 1){
 							roomsTable += ' vs ';
 						}
-						roomsTable += room.players[pIndex];
+						roomsTable += '<b id="small">' + room.players[pIndex] + '</b>';
 					}
-					roomsTable += '</b></td></tr>';
+					roomsTable += '</div></td></tr>';
 				}
 				roomsTable += '</table>';
 
@@ -60,6 +61,23 @@
 					$(document).off('click', '#room');
 				});
 			}
+			
+			// 방에 입장함
+			if(header == 'gameID'){
+				gameID = msg.split('@')[1];
+				$('#mainContainer').css({
+					'display' : 'flex'
+				});
+				$('#contentContainer').css({
+					'display' : 'none'
+				});
+			}
+			
+			// 게임 진행정보 수신
+			if(header == 'game_status'){
+				
+			}
+			
 		};
 		
 		$(document).on('click', '#room', function() {
@@ -72,7 +90,7 @@
 <style type="text/css">
 	
 	#mainContainer{
-		display: flex;
+		display: none;
 		text-align: center;
 		justify-content: center;
 	}
@@ -91,6 +109,7 @@
 	}
 	
 	#room {
+		display: relative;
 		border: 1px solid;
 		width: 800px;
 	}
@@ -99,10 +118,13 @@
 		font-size: 12px;
 	}
 	
+	#roomInfo {
+		right: -10px;
+	}
+	
 </style>
 <body>
 	<div id="mainContainer">
-	
 		<div id="content">
 			<div id="dices">
 				<div id="rolls">
@@ -211,9 +233,6 @@
 						<td id="p2"></td>
 					</tr>
 				</table>
-				
-				<button id="textBtn">테스트</button>
-				
 			</div>
 		</div>
 	</div>
