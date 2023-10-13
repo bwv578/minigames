@@ -65,14 +65,15 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 		if(message.getPayload().toString().split("@")[0].equals("create_room")) {
 			String title = message.getPayload().toString().split("@")[1];
 			
-			// 게임객체 생성
-			Game newGame = new Game(title);
-			newGame.getPlayers().add(players.get(session));
-			
 			// 새로운 게임 고유ID 발급
 			UUID uuid = UUID.randomUUID();
-			newGame.setGameID(uuid.toString());
-			
+
+			// 게임객체 생성, 게임에 방 개설한 플레이어 추가
+			Game newGame = new Game(title, uuid.toString());
+			Player player = players.get(session);
+			player.setFirst(true);
+			newGame.getPlayers().add(player);
+
 			// 게임방 목록에 새 게임 추가
 			synchronized (games) {
 				games.put(uuid.toString(), newGame);
@@ -80,14 +81,15 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 			
 			// 클라이언트에게 게임ID 전송
 			session.sendMessage(new TextMessage("gameID@" + uuid.toString()));
+			// 클라이언트에게 차례 전송
+			session.sendMessage(new TextMessage("first@true"));
 		}
 		
 		// 게임방에 참가요청
 		if(message.getPayload().toString().split("@")[0].equals("enter")) {
 			String msg[] = message.getPayload().toString().split("@");
 			String gameID = msg[1];
-			System.out.println(gameID);
-			
+
 			synchronized (games) {
 				Game game = games.get(gameID);
 				Player player = players.get(session);
@@ -96,7 +98,11 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 					// 게임 시작
 					Player opponent = game.getPlayers().get(0);
 					player.setOpponent(opponent.getWsSession());
+					player.setFirst(false);
 					game.getPlayers().add(player);
+					game.roll();
+					session.sendMessage(new TextMessage("gameID@" + game.getGameID()));
+					session.sendMessage(new TextMessage("first@false"));
 					// 양측 플레이어에게 게임방 상태 전송
 					session.sendMessage(new TextMessage("game_status@" + game.toJSON()));
 					opponent.getWsSession().sendMessage(new TextMessage("game_status@" + game.toJSON()));
