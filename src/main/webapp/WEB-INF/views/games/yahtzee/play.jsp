@@ -185,6 +185,9 @@
 				
 				// 나의 턴일때
 				if(myTurn){
+					$('[act="act"]').off('click');
+					$('[act="act"]').off('mouseenter mouseleave');
+					
 					if(myStatus.aces == ''){
 						$('#p1aces').hover(function(){
 							$(this).css("background-color", "yellow");
@@ -315,6 +318,9 @@
 							selectCombination('choice');
 						});
 					}
+				}else{
+					$('[act="act"]').off('click');
+					$('[act="act"]').off('mouseenter mouseleave');
 				}
 			}
 			
@@ -405,37 +411,37 @@
 				
 					<tr>
 						<td> <i class="fa-solid fa-dice-one"></i> Aces</td>
-						<td id="p1aces"></td>
+						<td id="p1aces" act="act"></td>
 						<td id="p2aces"></td> 
 					</tr>
 					
 					<tr>
 						<td> <i class="fa-solid fa-dice-two"></i> Tows</td>
-						<td id="p1twos"></td>
+						<td id="p1twos" act="act"></td>
 						<td id="p2twos"></td>
 					</tr>
 					
 					<tr>
 						<td> <i class="fa-solid fa-dice-three"></i> Threes</td>
-						<td id="p1threes"></td>
+						<td id="p1threes" act="act"></td>
 						<td id="p2threes"></td>
 					</tr>
 					
 					<tr>
 						<td> <i class="fa-solid fa-dice-four"></i> Fours</td>
-						<td id="p1fours"></td>
+						<td id="p1fours" act="act"></td>
 						<td id="p2fours"></td>
 					</tr>
 					
 					<tr>
 						<td> <i class="fa-solid fa-dice-five"></i> Fives</td>
-						<td id="p1fives"></td>
-						<td id="p2fives"></td>
+						<td id="p1fives" act="act"></td>
+						<td id="p2fives" ></td>
 					</tr>
 					
 					<tr>
 						<td> <i class="fa-solid fa-dice-six"></i> Sixes</td>
-						<td id="p1sixes"></td>
+						<td id="p1sixes" act="act"></td>
 						<td id="p2sixes"></td>
 					</tr>
 					
@@ -445,43 +451,43 @@
 					
 					<tr>
 						<td>3 of a kind</td>
-						<td id="p13ofakind"></td>
+						<td id="p13ofakind" act="act"></td>
 						<td id="p23ofakind"></td>
 					</tr>
 					
 					<tr>
 						<td>4 of a kind</td>
-						<td id="p14ofakind"></td>
+						<td id="p14ofakind" act="act"></td>
 						<td id="p24ofakind"></td>
 					</tr>
 					
 					<tr>
 						<td>Full House</td>
-						<td id="p1fullhouse"></td>
+						<td id="p1fullhouse" act="act"></td>
 						<td id="p2fullhouse"></td>
 					</tr>
 					
 					<tr>
 						<td>Small straight</td>
-						<td id="p1smallstr"></td>
+						<td id="p1smallstr" act="act"></td>
 						<td id="p2smallstr"></td>
 					</tr>
 					
 					<tr>
 						<td>Large straight</td>
-						<td id="p1largestr"></td>
+						<td id="p1largestr" act="act"></td>
 						<td id="p2largestr"></td>
 					</tr>
 					
 					<tr>
 						<td>Yacht</td>
-						<td id="p1yatch"></td>
+						<td id="p1yatch" act="act"></td>
 						<td id="p2yatch"></td>
 					</tr>
 					
 					<tr>
 						<td>Choice</td>
-						<td id="p1choice"></td>
+						<td id="p1choice" act="act"></td>
 						<td id="p2choice"></td>
 					</tr>
 				</table>
