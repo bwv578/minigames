@@ -1,5 +1,6 @@
 package com.games.models.yahtzee;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.UUID;
@@ -154,6 +155,25 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 					}						
 				}
 			}
+			
+			// 주사위 리롤 요청인 경우
+			if(isValidTurn && request.equals("reroll") && game.getRemaining() > 0) {
+				String[] strRerollIndexes = strMsg.split("@")[3].split("/");
+				int[] rerollIndexes = new int[strRerollIndexes.length];
+
+				for(int i=0; i<strRerollIndexes.length; i++) {
+					rerollIndexes[i] = Integer.parseInt(strRerollIndexes[i]);
+				}
+				
+				game.reroll(rerollIndexes);
+				game.subtract();
+				
+				for(Player p : game.getPlayers().values()) {
+					WebSocketSession pSession = p.getWsSession();
+					pSession.sendMessage(new TextMessage("game_status@" + game.toJSON()));
+				}	
+			}
+			
 		}
 	}
 

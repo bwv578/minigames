@@ -44,9 +44,24 @@ public class Game {
 		this.dice = result;
 	}
 	
+	// 주사위 다시굴리기
+	public void reroll(int[] rerollIndexes) {
+		Random random = new Random();
+		
+		for(int num : rerollIndexes) {
+			int randomDiceNumber = random.nextInt(6) + 1;
+			this.dice.set(num, randomDiceNumber);
+		}
+	}
+	
 	// 턴 카운트
 	public void countTurn() {
 		this.turn ++;
+	}
+	
+	// 주사위 리롤횟수 차감
+	public void subtract() {
+		this.remaining --;
 	}
 	
 	// JSON 문자열로 변환

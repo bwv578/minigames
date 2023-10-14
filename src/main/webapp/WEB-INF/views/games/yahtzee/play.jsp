@@ -94,7 +94,7 @@
 				let oppName = '';
 				let myStatus = '';
 				let oppStatus = '';
-				
+
 				if(first == 'true'){
 					myStatus = gameStatus.players[0].status;
 					oppStatus = gameStatus.players[1].status;
@@ -185,8 +185,19 @@
 				
 				// 나의 턴일때
 				if(myTurn){
+					// 초기화
 					$('[act="act"]').off('click');
 					$('[act="act"]').off('mouseenter mouseleave');
+					$('#reroll').css({
+						'display' : 'block'
+					});
+					$('[sel="true"]').css({
+						'color' : 'black'
+					});
+					$('[sel="true"]').attr('sel', 'false');
+					$('[property="dice"]').off('click');
+
+					$('#rerollbtn').html('다시 굴리기 ' + gameStatus.remaining + '/2');
 					
 					if(myStatus.aces == ''){
 						$('#p1aces').hover(function(){
@@ -318,9 +329,31 @@
 							selectCombination('choice');
 						});
 					}
+					// 주사위 클릭이벤트
+					$('[property="dice"]').click(function(){
+						if($(this).attr('sel') == 'false'){
+							$(this).css({
+								'color' : 'grey'
+							});
+							$(this).attr('sel', 'true');
+						}else{
+							$(this).css({
+								'color' : 'black'
+							});
+							$(this).attr('sel', 'false');
+						}
+					});
 				}else{
 					$('[act="act"]').off('click');
 					$('[act="act"]').off('mouseenter mouseleave');
+					$('[property="dice"]').off('click');	
+					$('[property="dice"]').css({
+						'color' : 'black'
+					});
+					$('[property="dice"]').attr('sel', 'false');
+					$('#reroll').css({
+						'display' : 'none'
+					});
 				}
 			}
 			
@@ -330,6 +363,22 @@
 		function selectCombination(option){
 			socket.send('gameID@' + gameID + '@select@' + option);
 		}
+		
+		// 주사위 리롤
+		$('#rerollbtn').click(function(){
+			let indexes = '';
+			for(let i=0; i<5; i++){
+				const targetID = 'dice' + (i + 1);
+				if($('#' + targetID).attr('sel') == 'true'){
+					indexes += i + '/';
+				}
+			}
+			if(indexes == ''){
+				alert('리롤할 주사위를 선택하십쇼');
+			}else{
+				socket.send('gameID@' + gameID + '@reroll@' + indexes);
+			}
+		});
 		
 		// 방 입장
 		$(document).on('click', '#room', function() {
@@ -351,7 +400,7 @@
 		display: flex;
 		text-align: center;
 		justify-content: center;
-		font-size: 52px;
+		font-size: 60px;
 	}
 	
 	#game td{
@@ -374,6 +423,10 @@
 		right: -10px;
 	}
 	
+	#reroll {
+		display: none;
+	}
+	
 </style>
 <body>
 	<div id="mainContainer">
@@ -382,11 +435,21 @@
 				<div id="rolls">
 					<table id="randomDices">
 						<tr>
-							<td id="dice1"><i class="fa-regular fa-square"></i></td>
-							<td id="dice2"><i class="fa-regular fa-square"></i></td>
-							<td id="dice3"><i class="fa-regular fa-square"></i></td>
-							<td id="dice4"><i class="fa-regular fa-square"></i></td>
-							<td id="dice5"><i class="fa-regular fa-square"></i></td>
+							<td id="dice1" property="dice" sel="false">
+								<i class="fa-regular fa-square"></i>
+							</td>
+							<td id="dice2" property="dice" sel="false">
+								<i class="fa-regular fa-square"></i>
+							</td>
+							<td id="dice3" property="dice" sel="false">
+								<i class="fa-regular fa-square"></i>
+							</td>
+							<td id="dice4" property="dice" sel="false">
+								<i class="fa-regular fa-square"></i>
+							</td>
+							<td id="dice5" property="dice" sel="false">
+								<i class="fa-regular fa-square"></i>
+							</td>
 						</tr>
 					</table>
 				</div>
@@ -395,7 +458,7 @@
 			<br>
 			
 			<div id="reroll">
-				<button>다시굴리기</button>
+				<button id="rerollbtn"></button>
 			</div>
 
 			<br>
@@ -416,7 +479,7 @@
 					</tr>
 					
 					<tr>
-						<td> <i class="fa-solid fa-dice-two"></i> Tows</td>
+						<td> <i class="fa-solid fa-dice-two"></i> Twos</td>
 						<td id="p1twos" act="act"></td>
 						<td id="p2twos"></td>
 					</tr>
