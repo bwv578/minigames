@@ -27,7 +27,7 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 			sbRooms.append("{");
 			sbRooms.append("\"gameID\" : \"" + ID + "\", ");
 			sbRooms.append("\"players\" : [");
-			for(Player player : game.getPlayers()) {
+			for(Player player : game.getPlayers().values()) {
 				sbRooms.append("\"" + player.getName() + "\", ");
 			}
 			sbRooms.deleteCharAt(sbRooms.lastIndexOf(","));
@@ -61,8 +61,13 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 	public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
 		// TODO Auto-generated method stub
 		
-		// 새로운 게임 방 생성
-		if(message.getPayload().toString().split("@")[0].equals("create_room")) {
+		// 메시지
+		String strMsg = message.getPayload().toString();
+		// 요청 헤더
+		String header = strMsg.split("@")[0];
+
+		// 새로운 게임방 생성
+		if(header.equals("create_room")) {
 			String title = message.getPayload().toString().split("@")[1];
 			
 			// 새로운 게임 고유ID 발급
@@ -72,7 +77,7 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 			Game newGame = new Game(title, uuid.toString());
 			Player player = players.get(session);
 			player.setFirst(true);
-			newGame.getPlayers().add(player);
+			newGame.getPlayers().put(session, player);
 
 			// 게임방 목록에 새 게임 추가
 			synchronized (games) {
@@ -86,7 +91,7 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 		}
 		
 		// 게임방에 참가요청
-		if(message.getPayload().toString().split("@")[0].equals("enter")) {
+		if(header.equals("enter")) {
 			String msg[] = message.getPayload().toString().split("@");
 			String gameID = msg[1];
 
@@ -96,16 +101,18 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 				
 				if(game.getPlayers().size() < 2) {
 					// 게임 시작
-					Player opponent = game.getPlayers().get(0);
-					player.setOpponent(opponent.getWsSession());
+					for(Player opponent : game.getPlayers().values()) {
+						player.setOpponent(opponent.getWsSession());
+						opponent.setOpponent(session);
+					}			
 					player.setFirst(false);
-					game.getPlayers().add(player);
+					game.getPlayers().put(session, player);
 					game.roll();
 					session.sendMessage(new TextMessage("gameID@" + game.getGameID()));
 					session.sendMessage(new TextMessage("first@false"));
 					// 양측 플레이어에게 게임방 상태 전송
 					session.sendMessage(new TextMessage("game_status@" + game.toJSON()));
-					opponent.getWsSession().sendMessage(new TextMessage("game_status@" + game.toJSON()));
+					player.getOpponent().sendMessage(new TextMessage("game_status@" + game.toJSON()));
 				}else {
 					// 방이 가득 찬 경우
 					session.sendMessage(new TextMessage("full_room@"));
@@ -114,6 +121,40 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 			}
 		}
 		
+		// 플레이어의 게임 조작정보 수신
+		if(header.equals("gameID")) {
+			String gameID = strMsg.split("@")[1];
+			Game game = games.get(gameID);
+			Player player = game.getPlayers().get(session);		
+			String request = strMsg.split("@")[2];
+			int turn = game.getTurn();
+			boolean isValidTurn = false;
+			
+			// 옳은 턴인지 판별
+			if(player.isFirst() && turn % 2 == 1) isValidTurn = true;
+			if(!player.isFirst() && turn % 2 == 0) isValidTurn = true;
+			
+			// 득점옵션 선택 요청인 경우
+			if(isValidTurn && request.equals("select")) {
+				String option = strMsg.split("@")[3];
+				int result = player.updateStatus(option, game.getDice());
+
+				if(result == 0) {
+					// 잘못된(조작된) 요청일 경우
+					session.sendMessage(new TextMessage("invalid_request@"));
+				}else if(result == 1) {
+					// 게임상태 업데이트 성공
+					game.countTurn();
+					game.setRemaining(2);
+					game.roll();
+
+					for(Player p : game.getPlayers().values()) {
+						WebSocketSession pSession = p.getWsSession();
+						pSession.sendMessage(new TextMessage("game_status@" + game.toJSON()));
+					}						
+				}
+			}
+		}
 	}
 
 	@Override

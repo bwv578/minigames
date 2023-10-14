@@ -19,8 +19,6 @@
 		
 		let gameID = '';
 		let first = '';
-		let myStatus = '';
-		let oppStatus = '';
 
 		document.getElementById('mkRoom').onclick = function(){	
 			socket.send('create_room@' + '임의의 방제');
@@ -84,8 +82,18 @@
 			// 게임 진행정보 수신
 			if(header == 'game_status'){
 				const gameStatus = JSON.parse(msg.split('@')[1]);
+				const dice = gameStatus.dice;
+				const turn = gameStatus.turn;
+				let myTurn = false;
+				if(first == 'true' && (turn % 2) == 1){
+					myTurn = true;
+				}else if(first == 'false' && (turn % 2) == 0){
+					myTurn = true;
+				}
 				let myName = '';
 				let oppName = '';
+				let myStatus = '';
+				let oppStatus = '';
 				
 				if(first == 'true'){
 					myStatus = gameStatus.players[0].status;
@@ -96,7 +104,27 @@
 					myStatus = gameStatus.players[1].status;
 					oppStatus = gameStatus.players[0].status;
 					myName = gameStatus.players[1].name;
-					oppName = gameStatus.players[2].name;
+					oppName = gameStatus.players[0].name;
+				}
+				
+				// 주사위
+				for(let index=0; index<=4; index++){
+					const targetID = 'dice' + (index + 1);
+					const diceNum = dice[index];
+
+					if(diceNum == 1){
+						$('#' + targetID).html('<i class="fa-solid fa-dice-one"></i>');
+					}else if(diceNum == 2){
+						$('#' + targetID).html('<i class="fa-solid fa-dice-two"></i>');
+					}else if(diceNum == 3){
+						$('#' + targetID).html('<i class="fa-solid fa-dice-three"></i>');
+					}else if(diceNum == 4){
+						$('#' + targetID).html('<i class="fa-solid fa-dice-four"></i>');
+					}else if(diceNum == 5){
+						$('#' + targetID).html('<i class="fa-solid fa-dice-five"></i>');
+					}else if(diceNum == 6){
+						$('#' + targetID).html('<i class="fa-solid fa-dice-six"></i>');
+					}
 				}
 				
 				// 플레이어 이름
@@ -140,12 +168,12 @@
 				$('#p2fullhouse').html(oppStatus.fullhouse);
 				
 				// small straight
-				$('#p1sstraight').html(myStatus.smallstr);
-				$('#p2sstraight').html(oppStatus.smallstr);
+				$('#p1smallstr').html(myStatus.smallstr);
+				$('#p2smallstr').html(oppStatus.smallstr);
 				
 				// large straight
-				$('#p1lstraight').html(myStatus.largestr);
-				$('#p2lstraight').html(oppStatus.largestr);
+				$('#p1largestr').html(myStatus.largestr);
+				$('#p2largestr').html(oppStatus.largestr);
 				
 				// yatch
 				$('#p1yatch').html(myStatus.yatch);
@@ -154,10 +182,150 @@
 				// choice
 				$('#p1choice').html(myStatus.choice);
 				$('#p2choice').html(oppStatus.choice);
+				
+				// 나의 턴일때
+				if(myTurn){
+					if(myStatus.aces == ''){
+						$('#p1aces').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p1aces').click(function(){
+							selectCombination('aces');
+						});
+					}
+					if(myStatus.twos == ''){
+						$('#p1twos').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p1twos').click(function(){
+							selectCombination('twos');
+						});
+					}
+					if(myStatus.threes == ''){
+						$('#p1threes').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p1threes').click(function(){
+							selectCombination('threes');
+						});
+					}
+					if(myStatus.fours == ''){
+						$('#p1fours').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p1fours').click(function(){
+							selectCombination('fours');
+						});
+					}
+					if(myStatus.fives == ''){
+						$('#p1fives').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p1fives').click(function(){
+							selectCombination('fives');
+						});
+					}
+					if(myStatus.sixes == ''){
+						$('#p1sixes').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p1sixes').click(function(){
+							selectCombination('sixes');
+						});
+					}
+					if(myStatus.threeofakind == ''){
+						$('#p13ofakind').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p13ofakind').click(function(){
+							selectCombination('3ofakind');
+						});
+					}
+					if(myStatus.fourofakind == ''){
+						$('#p14ofakind').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p14ofakind').click(function(){
+							selectCombination('4ofakind');
+						});
+					}
+					if(myStatus.fullhouse == ''){
+						$('#p1fullhouse').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p1fullhouse').click(function(){
+							selectCombination('fullhouse');
+						});
+					}
+					if(myStatus.smallstr == ''){
+						$('#p1smallstr').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p1smallstr').click(function(){
+							selectCombination('smallstr');
+						});
+					}
+					if(myStatus.largestr == ''){
+						$('#p1largestr').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p1largestr').click(function(){
+							selectCombination('largestr');
+						});
+					}
+					if(myStatus.yatch == ''){
+						$('#p1yatch').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p1yatch').click(function(){
+							selectCombination('yatch');
+						});
+					}
+					if(myStatus.choice == ''){
+						$('#p1choice').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p1choice').click(function(){
+							selectCombination('choice');
+						});
+					}
+				}
 			}
 			
 		};
 		
+		// 득점옵션 선택
+		function selectCombination(option){
+			socket.send('gameID@' + gameID + '@select@' + option);
+		}
+		
+		// 방 입장
 		$(document).on('click', '#room', function() {
 			socket.send('enter@' + $(this).attr('gameID'));
 			$(document).off('click', '#room');
@@ -208,11 +376,11 @@
 				<div id="rolls">
 					<table id="randomDices">
 						<tr>
-							<td><i class="fa-regular fa-square"></i></td>
-							<td><i class="fa-regular fa-square"></i></td>
-							<td><i class="fa-regular fa-square"></i></td>
-							<td><i class="fa-regular fa-square"></i></td>
-							<td><i class="fa-regular fa-square"></i></td>
+							<td id="dice1"><i class="fa-regular fa-square"></i></td>
+							<td id="dice2"><i class="fa-regular fa-square"></i></td>
+							<td id="dice3"><i class="fa-regular fa-square"></i></td>
+							<td id="dice4"><i class="fa-regular fa-square"></i></td>
+							<td id="dice5"><i class="fa-regular fa-square"></i></td>
 						</tr>
 					</table>
 				</div>
@@ -295,14 +463,14 @@
 					
 					<tr>
 						<td>Small straight</td>
-						<td id="p1sstraight"></td>
-						<td id="p2sstraight"></td>
+						<td id="p1smallstr"></td>
+						<td id="p2smallstr"></td>
 					</tr>
 					
 					<tr>
 						<td>Large straight</td>
-						<td id="p1lstraight"></td>
-						<td id="p2lstraight"></td>
+						<td id="p1largestr"></td>
+						<td id="p2largestr"></td>
 					</tr>
 					
 					<tr>
