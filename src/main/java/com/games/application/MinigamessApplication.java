@@ -6,6 +6,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.ComponentScan;
 
+
 @SpringBootApplication
 @ComponentScan(basePackages = {"com.games.controllers", "com.games.application", "com.games.config", "com.games.models"})
 public class MinigamessApplication extends SpringBootServletInitializer {

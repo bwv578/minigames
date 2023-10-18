@@ -17,7 +17,6 @@ public class Player {
 	private WebSocketSession opponent; // 게임상대 세션
 	private boolean first; // 차례 선 여부
 	private HashMap<String, Object> status; // 게임상태
-	private int remaining;
 
 	// 생성자
 	public Player(WebSocketSession session) {
@@ -30,13 +29,14 @@ public class Player {
 		this.status.put("fours", "");
 		this.status.put("fives", "");
 		this.status.put("sixes", "");
-		this.status.put("3ofakind", "");
 		this.status.put("4ofakind", "");
 		this.status.put("fullhouse", "");
 		this.status.put("smallstr", "");
 		this.status.put("largestr", "");
 		this.status.put("yatch", "");
 		this.status.put("choice", "");
+		this.status.put("bonus", "");
+		this.status.put("total", "");
 	}
 	
 	// 점수계산 및 게임상태 업데이트
@@ -67,20 +67,6 @@ public class Player {
 			}else if(option.equals("sixes")){
 				for(int num : dice) {
 					if(num == 6) score += num;
-				}
-			}else if(option.equals("3ofakind")){
-				for(int index=0; index<=2; index++) {
-					int standard = dice.get(index);
-					int sameNumbers = 0;
-					for(int num : dice) {
-						if(standard == num) sameNumbers ++;
-					}
-					if(sameNumbers >= 3) {
-						for(int num : dice) {
-							score += num;
-						}
-						break;
-					}
 				}
 			}else if(option.equals("4ofakind")){
 				for(int index=0; index<=1; index++) {
@@ -165,6 +151,29 @@ public class Player {
 			}
 
 			this.status.put(option, score);
+			
+			// bonus 추가
+			int tops = 0;
+			if(!this.status.get("aces").equals("")) tops += (Integer)this.status.get("aces");
+			if(!this.status.get("twos").equals("")) tops += (Integer)this.status.get("twos");
+			if(!this.status.get("threes").equals("")) tops += (Integer)this.status.get("threes");
+			if(!this.status.get("fours").equals("")) tops += (Integer)this.status.get("fours");
+			if(!this.status.get("fives").equals("")) tops += (Integer)this.status.get("fives");
+			if(!this.status.get("sixes").equals("")) tops += (Integer)this.status.get("sixes");
+			if(tops >= 63) this.status.put("bonus", 35);
+			
+			// total 집계
+			int total = 0;
+			for(Object value : this.status.values()) {			
+				if(!value.equals("")) {
+					total += (Integer)value;
+				}
+			}
+			if(!this.status.get("total").equals("")) {
+				total -= (Integer)this.status.get("total");
+			}
+			
+			this.status.put("total", total);
 			return 1; 
 		}else {
 			return 0;

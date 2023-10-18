@@ -155,9 +155,9 @@
 				$('#p1sixes').html(myStatus.sixes);
 				$('#p2sixes').html(oppStatus.sixes);
 				
-				// 3 of a kind
-				$('#p13ofakind').html(myStatus.threeofakind);
-				$('#p23ofakind').html(oppStatus.threeofakind);
+				// bonus
+				$('#p1bonus').html(myStatus.bonus);
+				$('#p2bonus').html(oppStatus.bonus);
 				
 				// 4 of a kind
 				$('#p14ofakind').html(myStatus.fourofakind);
@@ -182,6 +182,10 @@
 				// choice
 				$('#p1choice').html(myStatus.choice);
 				$('#p2choice').html(oppStatus.choice);
+				
+				// total
+				$('#p1total').html(myStatus.total);
+				$('#p2total').html(oppStatus.total);
 				
 				// 나의 턴일때
 				if(myTurn){
@@ -257,16 +261,6 @@
 						});
 						$('#p1sixes').click(function(){
 							selectCombination('sixes');
-						});
-					}
-					if(myStatus.threeofakind == ''){
-						$('#p13ofakind').hover(function(){
-							$(this).css("background-color", "yellow");
-						}, function(){
-							$(this).css("background-color", "transparent");
-						});
-						$('#p13ofakind').click(function(){
-							selectCombination('3ofakind');
 						});
 					}
 					if(myStatus.fourofakind == ''){
@@ -385,6 +379,13 @@
 			socket.send('enter@' + $(this).attr('gameID'));
 			$(document).off('click', '#room');
 		});
+		
+		// 방 퇴장(기권)
+		$(document).on('click', '#exit', function(){
+			socket.send('gameID@' + gameID + '@exit@');
+			$()
+		});
+		
 	}
 
 </script>
@@ -508,14 +509,10 @@
 						<td id="p2sixes"></td>
 					</tr>
 					
-					<tr>
-						<td colspan="3">&nbsp;</td>
-					</tr>
-					
-					<tr>
-						<td>3 of a kind</td>
-						<td id="p13ofakind" act="act"></td>
-						<td id="p23ofakind"></td>
+					<tr id="bonus">
+						<td>Bonus</td>
+						<td id="p1bonus"></td>
+						<td id="p2bonus"></td>
 					</tr>
 					
 					<tr>
@@ -552,6 +549,12 @@
 						<td>Choice</td>
 						<td id="p1choice" act="act"></td>
 						<td id="p2choice"></td>
+					</tr>
+					
+					<tr id="total">
+						<td>Total</td>
+						<td id="p1total"></td>
+						<td id="p2total"></td>
 					</tr>
 				</table>
 			</div>

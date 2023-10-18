@@ -14,7 +14,6 @@ import lombok.Setter;
 public class Game {
 	
 	private String title; // 게임 방제
-	//private ArrayList<Player> players; // 플레이어 목록
 	private HashMap<WebSocketSession, Player> players; // 플레이어 목록
 	private String gameID; // 게임 고유ID
 	private int turn; // 턴
@@ -86,13 +85,14 @@ public class Game {
 			sbResult.append("\"fours\" : \"" + player.getStatus().get("fours") + "\",");
 			sbResult.append("\"fives\" : \"" + player.getStatus().get("fives") + "\",");
 			sbResult.append("\"sixes\" : \"" + player.getStatus().get("sixes") + "\",");
-			sbResult.append("\"threeofakind\" : \"" + player.getStatus().get("3ofakind") + "\",");
+			sbResult.append("\"bonus\" : \"" + player.getStatus().get("bonus") + "\",");
 			sbResult.append("\"fourofakind\" : \"" + player.getStatus().get("4ofakind") + "\",");
 			sbResult.append("\"fullhouse\" : \"" + player.getStatus().get("fullhouse") + "\",");
 			sbResult.append("\"smallstr\" : \"" + player.getStatus().get("smallstr") + "\",");
 			sbResult.append("\"largestr\" : \"" + player.getStatus().get("largestr") + "\",");
 			sbResult.append("\"choice\" : \"" + player.getStatus().get("choice") + "\",");
-			sbResult.append("\"yatch\" : \"" + player.getStatus().get("yatch") + "\"");
+			sbResult.append("\"yatch\" : \"" + player.getStatus().get("yatch") + "\",");
+			sbResult.append("\"total\" : \"" + player.getStatus().get("total") + "\"");
 			sbResult.append("}");
 			sbResult.append("},");
 		}
