@@ -2,6 +2,7 @@ package com.games.models.yahtzee;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Random;
 
 import org.springframework.web.socket.WebSocketSession;
@@ -14,7 +15,7 @@ import lombok.Setter;
 public class Game {
 	
 	private String title; // 게임 방제
-	private HashMap<WebSocketSession, Player> players; // 플레이어 목록
+	private LinkedHashMap<WebSocketSession, Player> players; // 플레이어 목록
 	private String gameID; // 게임 고유ID
 	private int turn; // 턴
 	private ArrayList<Integer> dice; // 주사위 결과
@@ -24,7 +25,7 @@ public class Game {
 	public Game(String title, String uuid) {
 		this.title = title;
 		this.gameID = uuid;
-		this.players = new HashMap<>();
+		this.players = new LinkedHashMap<>();
 		this.dice = new ArrayList<>();
 		this.turn = 1;
 		this.remaining = 2;
