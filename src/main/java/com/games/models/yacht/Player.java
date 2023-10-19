@@ -1,4 +1,4 @@
-package com.games.models.yahtzee;
+package com.games.models.yacht;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +33,7 @@ public class Player {
 		this.status.put("fullhouse", "");
 		this.status.put("smallstr", "");
 		this.status.put("largestr", "");
-		this.status.put("yatch", "");
+		this.status.put("yacht", "");
 		this.status.put("choice", "");
 		this.status.put("bonus", "");
 		this.status.put("total", "");
@@ -134,7 +134,7 @@ public class Player {
 					}
 				}
 				if(isStr) score = 40;
-			}else if(option.equals("yatch")){
+			}else if(option.equals("yacht")){
 				int standard = dice.get(0);
 				boolean isYatch = true;
 				for(int num : dice) {

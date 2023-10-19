@@ -1,7 +1,6 @@
-package com.games.models.yahtzee;
+package com.games.models.yacht;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Random;
 
@@ -92,7 +91,7 @@ public class Game {
 			sbResult.append("\"smallstr\" : \"" + player.getStatus().get("smallstr") + "\",");
 			sbResult.append("\"largestr\" : \"" + player.getStatus().get("largestr") + "\",");
 			sbResult.append("\"choice\" : \"" + player.getStatus().get("choice") + "\",");
-			sbResult.append("\"yatch\" : \"" + player.getStatus().get("yatch") + "\",");
+			sbResult.append("\"yacht\" : \"" + player.getStatus().get("yacht") + "\",");
 			sbResult.append("\"total\" : \"" + player.getStatus().get("total") + "\"");
 			sbResult.append("}");
 			sbResult.append("},");

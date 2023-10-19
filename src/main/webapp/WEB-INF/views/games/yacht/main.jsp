@@ -27,7 +27,7 @@
 <body>
 	<div id="contentContainer"> 
 		<div id="roomsContainer">
-			<h1>yahtzee main</h1> 
+			<h1>yacht main</h1> 
 			<hr>
 			<button id="mkRoom">방 만들기</button>
 			<button id="refresh">새로고침</button>

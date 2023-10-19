@@ -14,8 +14,8 @@
 
 	window.onload = function(){
 	
-		//const socket = new WebSocket("ws://localhost:8080/yahtzeeWS");
-		const socket = new WebSocket("ws://52.78.178.113:8080/yahtzeeWS");
+		//const socket = new WebSocket("ws://localhost:8080/yachtWS");
+		const socket = new WebSocket("ws://52.78.178.113:8080/yachtWS");
 		
 		let gameID = '';
 		let first = '';
@@ -175,9 +175,9 @@
 				$('#p1largestr').html(myStatus.largestr);
 				$('#p2largestr').html(oppStatus.largestr);
 				
-				// yatch
-				$('#p1yatch').html(myStatus.yatch);
-				$('#p2yatch').html(oppStatus.yatch);
+				// yacht
+				$('#p1yacht').html(myStatus.yacht);
+				$('#p2yacht').html(oppStatus.yacht);
 				
 				// choice
 				$('#p1choice').html(myStatus.choice);
@@ -303,14 +303,14 @@
 							selectCombination('largestr');
 						});
 					}
-					if(myStatus.yatch == ''){
-						$('#p1yatch').hover(function(){
+					if(myStatus.yacht == ''){
+						$('#p1yacht').hover(function(){
 							$(this).css("background-color", "yellow");
 						}, function(){
 							$(this).css("background-color", "transparent");
 						});
-						$('#p1yatch').click(function(){
-							selectCombination('yatch');
+						$('#p1yacht').click(function(){
+							selectCombination('yacht');
 						});
 					}
 					if(myStatus.choice == ''){
@@ -384,6 +384,11 @@
 		$(document).on('click', '#exit', function(){
 			socket.send('gameID@' + gameID + '@exit@');
 			$()
+		});
+		
+		// 웹소켓 테스트
+		$(document).on('click', '#wsTest', function(){
+			socket.send('echo@');
 		});
 		
 	}
@@ -541,8 +546,8 @@
 					
 					<tr>
 						<td>Yacht</td>
-						<td id="p1yatch" act="act"></td>
-						<td id="p2yatch"></td>
+						<td id="p1yacht" act="act"></td>
+						<td id="p2yacht"></td>
 					</tr>
 					
 					<tr>
@@ -558,6 +563,8 @@
 					</tr>
 				</table>
 			</div>
+			
+			<button id="wsTest">웹소켓 테스트</button>
 		</div>
 	</div>
 </body>

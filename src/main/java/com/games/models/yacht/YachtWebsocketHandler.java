@@ -1,4 +1,4 @@
-package com.games.models.yahtzee;
+package com.games.models.yacht;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -10,7 +10,7 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-public class YahtzeeWebsocketHandler implements WebSocketHandler{
+public class YachtWebsocketHandler implements WebSocketHandler{
 	
 	volatile private HashMap<WebSocketSession, Player> players = new HashMap<>(); // 웹소켓 세션으로 플레이어 구분
 	volatile private HashMap<String, Game> games = new HashMap<>(); // 게임ID - 게임 연결 쌍	
@@ -66,6 +66,11 @@ public class YahtzeeWebsocketHandler implements WebSocketHandler{
 		// 요청 헤더
 		String header = strMsg.split("@")[0];
 
+		// 웹소켓 통신 테스트
+		if(header.equals("echo")) {
+			session.sendMessage(new TextMessage("echo@" + session.getId()));
+		}
+		
 		// 새로운 게임방 생성
 		if(header.equals("create_room")) {
 			String title = message.getPayload().toString().split("@")[1];
