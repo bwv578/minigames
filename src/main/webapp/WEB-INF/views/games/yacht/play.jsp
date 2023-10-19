@@ -391,6 +391,11 @@
 			socket.send('echo@');
 		});
 		
+		// 서버 상태정보
+		$(document).on('click', '#serverStatus', function(){
+			socket.send('server_status@');
+			console.log('s status r');
+		});
 	}
 
 </script>
@@ -565,6 +570,7 @@
 			</div>
 			
 			<button id="wsTest">웹소켓 테스트</button>
+			<button id="serverStatus">서버 상태정보 테스트</button>
 		</div>
 	</div>
 </body>

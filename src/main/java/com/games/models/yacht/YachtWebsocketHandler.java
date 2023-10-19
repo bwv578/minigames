@@ -41,6 +41,23 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		return sbRooms.toString();
 	}
 	
+	// 서버 상태정보 => JSON
+	public String retrieveServerStatus() {
+		StringBuilder sbServer = new StringBuilder();
+		
+		sbServer.append("{");
+		sbServer.append("\"playerNum\": \"" + this.players.values().size() + "\", ");
+		sbServer.append("\"connectedPlayers\": [");
+		for(Player player : this.players.values()) {
+			sbServer.append("\"" + player.getName() + "\", ");
+		}
+		if(this.players.values().size() != 0) sbServer.deleteCharAt(sbServer.lastIndexOf(","));
+		sbServer.append("]");
+		sbServer.append("}");
+		
+		return sbServer.toString();
+	}
+	
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 		// TODO Auto-generated method stub
@@ -69,6 +86,12 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		// 웹소켓 통신 테스트
 		if(header.equals("echo")) {
 			session.sendMessage(new TextMessage("echo@" + session.getId()));
+		}
+		
+		// 서버 상태정보
+		if(header.equals("server_status")) {
+			System.out.println("서버 -  s status r");
+			session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus()));
 		}
 		
 		// 새로운 게임방 생성
@@ -191,6 +214,9 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
 		// TODO Auto-generated method stub	
 		System.out.println("ws세션종료");
+		
+		players.remove(session);
+		
 	}
 
 	@Override
