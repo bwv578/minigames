@@ -394,8 +394,13 @@
 		// 서버 상태정보
 		$(document).on('click', '#serverStatus', function(){
 			socket.send('server_status@');
-			console.log('s status r');
 		});
+		
+		// 새로고침
+		$(document).on('click', '#refresh', function(){
+			socket.send('server_status@');
+		});
+		
 	}
 
 </script>

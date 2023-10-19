@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.swing.plaf.synth.SynthCheckBoxMenuItemUI;
+
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketHandler;
@@ -241,10 +243,14 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		
 		// 플레이어가 접속해있던 방 제거
 		String gameId = player.getGameID();
-		this.games.remove(gameId);
+		synchronized (games) {
+			this.games.remove(gameId);
+		}
 		
 		// 접속중인 플레이어 목록에서 사용자 제거
-		players.remove(session);
+		synchronized (players) {
+			players.remove(session);
+		}
 		
 	}
 
