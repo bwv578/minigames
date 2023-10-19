@@ -15,6 +15,7 @@ public class Player {
 	private String name; // 플레이어 이름
 	private WebSocketSession wsSession; // 플레이어 웹소켓 세션
 	private WebSocketSession opponent; // 게임상대 세션
+	private String gameID; // 게임방 ID
 	private boolean first; // 차례 선 여부
 	private HashMap<String, Object> status; // 게임상태
 

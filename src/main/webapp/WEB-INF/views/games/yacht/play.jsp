@@ -14,8 +14,8 @@
 
 	window.onload = function(){
 	
-		//const socket = new WebSocket("ws://localhost:8080/yachtWS");
-		const socket = new WebSocket("ws://52.78.178.113:8080/yachtWS");
+		const socket = new WebSocket("ws://localhost:8080/yachtWS");
+		//const socket = new WebSocket("ws://52.78.178.113:8080/yachtWS");
 		
 		let gameID = '';
 		let first = '';
@@ -30,9 +30,9 @@
 			const header = msg.split('@')[0];
 			
 			// 방 목록 정보를 수신한 경우
-			if(header == 'rooms'){
+			if(header == 'server_status'){
 				$('#rooms').empty();
-				const rooms = JSON.parse(msg.split('@')[1]);
+				const rooms = JSON.parse(msg.split('@')[1]).rooms;
 				
 				let roomsTable = '<table id="roomList">';
 				for(let index=0; index<rooms.length; index++){
