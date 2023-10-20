@@ -27,7 +27,12 @@ public class Game {
 		this.players = new LinkedHashMap<>();
 		this.dice = new ArrayList<>();
 		this.turn = 1;
-		this.remaining = 2;
+		this.remaining = 3;
+	}
+	
+	// 주사위 초기화
+	public void initDice() {
+		this.dice.clear();
 	}
 	
 	// 주사위 굴리기

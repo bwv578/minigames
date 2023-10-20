@@ -137,14 +137,14 @@ public class Player {
 				if(isStr) score = 40;
 			}else if(option.equals("yacht")){
 				int standard = dice.get(0);
-				boolean isYatch = true;
+				boolean isYacht = true;
 				for(int num : dice) {
 					if(num != standard) {
-						isYatch = false;
+						isYacht = false;
 						break;
 					}
 				}
-				if(isYatch) score = 50;
+				if(isYacht) score = 50;
 			}else if(option.equals("choice")){
 				for(int num : dice) {
 					score += num;

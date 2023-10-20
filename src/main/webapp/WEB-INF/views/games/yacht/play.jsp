@@ -14,8 +14,8 @@
 
 	window.onload = function(){
 	
-		//const socket = new WebSocket("ws://localhost:8080/yachtWS");
-		const socket = new WebSocket("ws://52.78.178.113:8080/yachtWS");
+		const socket = new WebSocket("ws://localhost:8080/yachtWS");
+		//const socket = new WebSocket("ws://52.78.178.113:8080/yachtWS");
 		
 		let gameID = '';
 		let first = '';
@@ -84,16 +84,17 @@
 				const gameStatus = JSON.parse(msg.split('@')[1]);
 				const dice = gameStatus.dice;
 				const turn = gameStatus.turn;
+				let myName = '';
+				let oppName = '';
+				let myStatus = '';
+				let oppStatus = '';
 				let myTurn = false;
+				
 				if(first == 'true' && (turn % 2) == 1){
 					myTurn = true;
 				}else if(first == 'false' && (turn % 2) == 0){
 					myTurn = true;
 				}
-				let myName = '';
-				let oppName = '';
-				let myStatus = '';
-				let oppStatus = '';
 
 				if(first == 'true'){
 					myStatus = gameStatus.players[0].status;
@@ -108,25 +109,34 @@
 				}
 				
 				// 주사위
-				for(let index=0; index<=4; index++){
-					const targetID = 'dice' + (index + 1);
-					const diceNum = dice[index];
+				if(dice.length == 0){
+					for(let index=1; index<=5; index++){
+						const targetID = 'dice' + index;
+						$('#' + targetID).html('<i class="fa-regular fa-square"></i>');
+					}
+				}else{
+					for(let index=0; index<=4; index++){
+						const targetID = 'dice' + (index + 1);
+						const diceNum = dice[index];
 
-					if(diceNum == 1){
-						$('#' + targetID).html('<i class="fa-solid fa-dice-one"></i>');
-					}else if(diceNum == 2){
-						$('#' + targetID).html('<i class="fa-solid fa-dice-two"></i>');
-					}else if(diceNum == 3){
-						$('#' + targetID).html('<i class="fa-solid fa-dice-three"></i>');
-					}else if(diceNum == 4){
-						$('#' + targetID).html('<i class="fa-solid fa-dice-four"></i>');
-					}else if(diceNum == 5){
-						$('#' + targetID).html('<i class="fa-solid fa-dice-five"></i>');
-					}else if(diceNum == 6){
-						$('#' + targetID).html('<i class="fa-solid fa-dice-six"></i>');
+						if(diceNum == 0){
+							$('#' + targetID).html('<i class="fa-regular fa-square"></i>');
+						}else if(diceNum == 1){
+							$('#' + targetID).html('<i class="fa-solid fa-dice-one"></i>');
+						}else if(diceNum == 2){
+							$('#' + targetID).html('<i class="fa-solid fa-dice-two"></i>');
+						}else if(diceNum == 3){
+							$('#' + targetID).html('<i class="fa-solid fa-dice-three"></i>');
+						}else if(diceNum == 4){
+							$('#' + targetID).html('<i class="fa-solid fa-dice-four"></i>');
+						}else if(diceNum == 5){
+							$('#' + targetID).html('<i class="fa-solid fa-dice-five"></i>');
+						}else if(diceNum == 6){
+							$('#' + targetID).html('<i class="fa-solid fa-dice-six"></i>');
+						}
 					}
 				}
-				
+
 				// 플레이어 이름
 				$('#p1name').html(myName);
 				$('#p2name').html(oppName);
@@ -200,9 +210,21 @@
 					});
 					$('[sel="true"]').attr('sel', 'false');
 					$('[property="dice"]').off('click');
-
-					$('#rerollbtn').html('다시 굴리기 ' + gameStatus.remaining + '/2');
+					// 턴 표시
+					$('#p1name').css({
+						'background-color' : 'green'
+					});
+					$('#p2name').css({
+						'background-color' : 'transparent'
+					});
 					
+					// 리롤버튼
+					if(gameStatus.remaining == 3){
+						$('#rerollbtn').html('주사위 굴리기');
+					}else{
+						$('#rerollbtn').html('다시 굴리기 ' + gameStatus.remaining + '/2');
+					}
+
 					if(myStatus.aces == ''){
 						$('#p1aces').hover(function(){
 							$(this).css("background-color", "yellow");
@@ -348,6 +370,13 @@
 					$('#reroll').css({
 						'display' : 'none'
 					});
+					// 턴 표시
+					$('#p1name').css({
+						'background-color' : 'transparent'
+					});
+					$('#p2name').css({
+						'background-color' : 'green'
+					});
 				}
 			}
 			
@@ -367,11 +396,8 @@
 					indexes += i + '/';
 				}
 			}
-			if(indexes == ''){
-				alert('리롤할 주사위를 선택하십쇼');
-			}else{
-				socket.send('gameID@' + gameID + '@reroll@' + indexes);
-			}
+
+			socket.send('gameID@' + gameID + '@reroll@' + indexes);
 		});
 		
 		// 방 입장

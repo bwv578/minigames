@@ -1,5 +1,6 @@
 package com.games.models.yacht;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.UUID;
@@ -16,34 +17,6 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 	
 	volatile private HashMap<WebSocketSession, Player> players = new HashMap<>(); // 웹소켓 세션으로 플레이어 구분
 	volatile private HashMap<String, Game> games = new HashMap<>(); // 게임ID - 게임 연결 쌍	
-
-	// 모든 게임방 조회 => JSON 문자열로 반환
-	/*
-	public String retrieveRooms() {
-		StringBuilder sbRooms = new StringBuilder();
-		Set<String> gameIDs = games.keySet();
-		
-		sbRooms.append("[");
-		for(String ID : gameIDs) {
-			Game game = games.get(ID);
-			
-			sbRooms.append("{");
-			sbRooms.append("\"gameID\" : \"" + ID + "\", ");
-			sbRooms.append("\"players\" : [");
-			for(Player player : game.getPlayers().values()) {
-				sbRooms.append("\"" + player.getName() + "\", ");
-			}
-			sbRooms.deleteCharAt(sbRooms.lastIndexOf(","));
-			sbRooms.append("], ");
-			sbRooms.append("\"title\" : \"" + game.getTitle() + "\"");
-			sbRooms.append("}, ");
-		}
-		if(gameIDs.size() != 0) sbRooms.deleteCharAt(sbRooms.lastIndexOf(","));
-		sbRooms.append("]");
-		
-		return sbRooms.toString();
-	}
-	*/
 	
 	// 서버 상태정보 => JSON
 	public String retrieveServerStatus() {
@@ -83,8 +56,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 	
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-		// TODO Auto-generated method stub
-		
+		// TODO Auto-generated method stub	
 		// 새로운 플레이어 접속 시 플레이어 목록에 추가, 게임방 목록 전송
 		Player newPlayer = new Player(session);
 		newPlayer.setName(session.getId());
@@ -92,13 +64,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 
 		synchronized (players) {
 			players.put(session, newPlayer);
-		}
-		
-		// test 
-		for(Player p : this.players.values()) {
-			p.getWsSession().sendMessage(new TextMessage("한놈 들어옴"));
-		}
-		
+		}	
 		session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus()));
 	}
 
@@ -164,7 +130,6 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 					player.setFirst(false);
 					player.setGameID(gameID);
 					game.getPlayers().put(session, player);
-					game.roll();
 					session.sendMessage(new TextMessage("gameID@" + game.getGameID()));
 					session.sendMessage(new TextMessage("first@false"));
 					// 양측 플레이어에게 게임방 상태 전송
@@ -202,8 +167,8 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 				}else if(result == 1) {
 					// 게임상태 업데이트 성공
 					game.countTurn();
-					game.setRemaining(2);
-					game.roll();
+					game.setRemaining(3);
+					game.initDice();
 
 					for(Player p : game.getPlayers().values()) {
 						WebSocketSession pSession = p.getWsSession();
@@ -212,17 +177,32 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 				}
 			}
 			
-			// 주사위 리롤 요청인 경우
+			// 주사위 롤/리롤 요청인 경우
 			if(isValidTurn && request.equals("reroll") && game.getRemaining() > 0) {
-				String[] strRerollIndexes = strMsg.split("@")[3].split("/");
-				int[] rerollIndexes = new int[strRerollIndexes.length];
-
-				for(int i=0; i<strRerollIndexes.length; i++) {
-					rerollIndexes[i] = Integer.parseInt(strRerollIndexes[i]);
+				String[] strRerollIndexes;
+				boolean success = false;
+				
+				if(strMsg.split("@").length == 4) {
+					strRerollIndexes = strMsg.split("@")[3].split("/");
+				}else {
+					strRerollIndexes = new String[0];
 				}
 				
-				game.reroll(rerollIndexes);
-				game.subtract();
+				int[] rerollIndexes = new int[strRerollIndexes.length];
+				
+				if(strRerollIndexes.length == 0) {
+					game.roll();
+					success = true;
+				}else {
+					for(int i=0; i<strRerollIndexes.length; i++) {
+						rerollIndexes[i] = Integer.parseInt(strRerollIndexes[i]);
+					}
+					if(game.getDice().size() != 0) {
+						game.reroll(rerollIndexes);
+						success = true;
+					}
+				}
+				if(success) game.subtract();
 				
 				for(Player p : game.getPlayers().values()) {
 					WebSocketSession pSession = p.getWsSession();
