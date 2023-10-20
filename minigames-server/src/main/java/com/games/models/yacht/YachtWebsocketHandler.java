@@ -1,11 +1,8 @@
 package com.games.models.yacht;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.UUID;
-
-import javax.swing.plaf.synth.SynthCheckBoxMenuItemUI;
 
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
