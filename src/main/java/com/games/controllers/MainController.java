@@ -8,10 +8,10 @@ import org.springframework.web.servlet.ModelAndView;
 
 @RestController
 public class MainController {
-
-	@RequestMapping("/")
-	public ModelAndView playYahtzee(HttpServletRequest req) {
-		ModelAndView mav = new ModelAndView("games/yacht/play");
+  
+	@RequestMapping("/")	
+	public ModelAndView main(HttpServletRequest req) {
+		ModelAndView mav = new ModelAndView("main");
 		return mav;
 	}
 	
