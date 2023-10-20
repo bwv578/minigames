@@ -14,5 +14,5 @@ public class MainController {
 		ModelAndView mav = new ModelAndView("games/yacht/play");
 		return mav;
 	}
-	
+
 }

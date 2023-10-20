@@ -14,8 +14,8 @@
 
 	window.onload = function(){
 	
-		//const socket = new WebSocket("ws://localhost:8080/yachtWS");
-		const socket = new WebSocket("ws://52.78.178.113:8080/yachtWS");
+		const socket = new WebSocket("ws://localhost:8080/yahtzeeWS");
+		//const socket = new WebSocket("ws://52.78.178.113:8080/yahtzeeWS");
 		
 		let gameID = '';
 		let first = '';
@@ -30,9 +30,9 @@
 			const header = msg.split('@')[0];
 			
 			// 방 목록 정보를 수신한 경우
-			if(header == 'server_status'){
+			if(header == 'rooms'){
 				$('#rooms').empty();
-				const rooms = JSON.parse(msg.split('@')[1]).rooms;
+				const rooms = JSON.parse(msg.split('@')[1]);
 				
 				let roomsTable = '<table id="roomList">';
 				for(let index=0; index<rooms.length; index++){
@@ -155,9 +155,9 @@
 				$('#p1sixes').html(myStatus.sixes);
 				$('#p2sixes').html(oppStatus.sixes);
 				
-				// bonus
-				$('#p1bonus').html(myStatus.bonus);
-				$('#p2bonus').html(oppStatus.bonus);
+				// 3 of a kind
+				$('#p13ofakind').html(myStatus.threeofakind);
+				$('#p23ofakind').html(oppStatus.threeofakind);
 				
 				// 4 of a kind
 				$('#p14ofakind').html(myStatus.fourofakind);
@@ -175,17 +175,13 @@
 				$('#p1largestr').html(myStatus.largestr);
 				$('#p2largestr').html(oppStatus.largestr);
 				
-				// yacht
-				$('#p1yacht').html(myStatus.yacht);
-				$('#p2yacht').html(oppStatus.yacht);
+				// yatch
+				$('#p1yatch').html(myStatus.yatch);
+				$('#p2yatch').html(oppStatus.yatch);
 				
 				// choice
 				$('#p1choice').html(myStatus.choice);
 				$('#p2choice').html(oppStatus.choice);
-				
-				// total
-				$('#p1total').html(myStatus.total);
-				$('#p2total').html(oppStatus.total);
 				
 				// 나의 턴일때
 				if(myTurn){
@@ -263,6 +259,16 @@
 							selectCombination('sixes');
 						});
 					}
+					if(myStatus.threeofakind == ''){
+						$('#p13ofakind').hover(function(){
+							$(this).css("background-color", "yellow");
+						}, function(){
+							$(this).css("background-color", "transparent");
+						});
+						$('#p13ofakind').click(function(){
+							selectCombination('3ofakind');
+						});
+					}
 					if(myStatus.fourofakind == ''){
 						$('#p14ofakind').hover(function(){
 							$(this).css("background-color", "yellow");
@@ -303,14 +309,14 @@
 							selectCombination('largestr');
 						});
 					}
-					if(myStatus.yacht == ''){
-						$('#p1yacht').hover(function(){
+					if(myStatus.yatch == ''){
+						$('#p1yatch').hover(function(){
 							$(this).css("background-color", "yellow");
 						}, function(){
 							$(this).css("background-color", "transparent");
 						});
-						$('#p1yacht').click(function(){
-							selectCombination('yacht');
+						$('#p1yatch').click(function(){
+							selectCombination('yatch');
 						});
 					}
 					if(myStatus.choice == ''){
@@ -379,28 +385,6 @@
 			socket.send('enter@' + $(this).attr('gameID'));
 			$(document).off('click', '#room');
 		});
-		
-		// 방 퇴장(기권)
-		$(document).on('click', '#exit', function(){
-			socket.send('gameID@' + gameID + '@exit@');
-			$()
-		});
-		
-		// 웹소켓 테스트
-		$(document).on('click', '#wsTest', function(){
-			socket.send('echo@');
-		});
-		
-		// 서버 상태정보
-		$(document).on('click', '#serverStatus', function(){
-			socket.send('server_status@');
-		});
-		
-		// 새로고침
-		$(document).on('click', '#refresh', function(){
-			socket.send('server_status@');
-		});
-		
 	}
 
 </script>
@@ -524,10 +508,14 @@
 						<td id="p2sixes"></td>
 					</tr>
 					
-					<tr id="bonus">
-						<td>Bonus</td>
-						<td id="p1bonus"></td>
-						<td id="p2bonus"></td>
+					<tr>
+						<td colspan="3">&nbsp;</td>
+					</tr>
+					
+					<tr>
+						<td>3 of a kind</td>
+						<td id="p13ofakind" act="act"></td>
+						<td id="p23ofakind"></td>
 					</tr>
 					
 					<tr>
@@ -556,8 +544,8 @@
 					
 					<tr>
 						<td>Yacht</td>
-						<td id="p1yacht" act="act"></td>
-						<td id="p2yacht"></td>
+						<td id="p1yatch" act="act"></td>
+						<td id="p2yatch"></td>
 					</tr>
 					
 					<tr>
@@ -565,17 +553,8 @@
 						<td id="p1choice" act="act"></td>
 						<td id="p2choice"></td>
 					</tr>
-					
-					<tr id="total">
-						<td>Total</td>
-						<td id="p1total"></td>
-						<td id="p2total"></td>
-					</tr>
 				</table>
 			</div>
-			
-			<button id="wsTest">웹소켓 테스트</button>
-			<button id="serverStatus">서버 상태정보 테스트</button>
 		</div>
 	</div>
 </body>
