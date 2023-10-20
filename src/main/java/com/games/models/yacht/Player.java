@@ -24,6 +24,13 @@ public class Player {
 		this.name = new String();
 		this.wsSession = session;
 		this.status = new HashMap<>();
+		this.init();
+	}
+	
+	// 플레이어의 게임 플레이정보 초기화
+	public void init() {
+		this.gameID = null;
+		this.opponent = null;
 		this.status.put("aces", "");
 		this.status.put("twos", "");
 		this.status.put("threes", "");

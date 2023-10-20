@@ -19,6 +19,7 @@ public class Game {
 	private int turn; // 턴
 	private ArrayList<Integer> dice; // 주사위 결과
 	private int remaining; // 남은 리롤횟수
+	private boolean active; // 활성화 상태
 	
 	// 생성자
 	public Game(String title, String uuid) {
@@ -28,6 +29,7 @@ public class Game {
 		this.dice = new ArrayList<>();
 		this.turn = 1;
 		this.remaining = 3;
+		this.active = false;
 	}
 	
 	// 주사위 초기화
@@ -75,6 +77,7 @@ public class Game {
 		sbResult.append("{");
 		sbResult.append("\"gameID\": \"" + this.gameID + "\",");
 		sbResult.append("\"title\": \"" + this.title + "\",");
+		sbResult.append("\"active\": \"" + this.active + "\",");
 		sbResult.append("\"turn\": \"" + this.turn + "\",");
 		sbResult.append("\"remaining\": \"" + this.remaining + "\",");
 		sbResult.append("\"players\": [");

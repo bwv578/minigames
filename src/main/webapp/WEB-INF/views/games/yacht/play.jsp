@@ -34,11 +34,18 @@
 				$('#rooms').empty();
 				const rooms = JSON.parse(msg.split('@')[1]).rooms;
 				
+				$('#mainContainer').css({
+					'display' : 'none'
+				});
+				$('#contentContainer').css({
+					'display' : 'flex'
+				});
+				
 				let roomsTable = '<table id="roomList">';
 				for(let index=0; index<rooms.length; index++){
 					const room = rooms[index];
 
-					roomsTable += '<tr><td id="room" gameID="' + room.gameID + '">';
+					roomsTable += '<tr><td class="room" gameID="' + room.gameID + '">';
 					roomsTable += '<b>' + room.title + '</b>';
 					roomsTable += '&nbsp; <div id="roomInfo"><b id="small">플레이어 : </b> ';
 					for(let pIndex=0; pIndex<room.players.length; pIndex++){
@@ -53,6 +60,10 @@
 
 				var roomList = $(roomsTable);
 				$('#rooms').append(roomList);
+				
+				$('.room').on('click', function () {
+			        socket.send('enter@' + $(this).attr('gameID'));
+			    });
 			}
 			
 			// 클릭한 방이 이미 게임 플레이중인 경우
@@ -66,6 +77,9 @@
 			// 방에 입장함
 			if(header == 'gameID'){
 				gameID = msg.split('@')[1];
+				$('[separator="td"]').css({
+					'background-color' : 'transparent'
+				});
 				$('#mainContainer').css({
 					'display' : 'flex'
 				});
@@ -84,30 +98,39 @@
 				const gameStatus = JSON.parse(msg.split('@')[1]);
 				const dice = gameStatus.dice;
 				const turn = gameStatus.turn;
+				const active = gameStatus.active;
 				let myName = '';
 				let oppName = '';
 				let myStatus = '';
 				let oppStatus = '';
 				let myTurn = false;
 				
-				if(first == 'true' && (turn % 2) == 1){
-					myTurn = true;
-				}else if(first == 'false' && (turn % 2) == 0){
-					myTurn = true;
+				if(active == 'true'){
+					if(first == 'true' && (turn % 2) == 1){
+						myTurn = true;
+					}else if(first == 'false' && (turn % 2) == 0){
+						myTurn = true;
+					}
+
+					if(first == 'true'){
+						myStatus = gameStatus.players[0].status;
+						oppStatus = gameStatus.players[1].status;
+						myName = gameStatus.players[0].name;
+						oppName = gameStatus.players[1].name;
+					}else{
+						myStatus = gameStatus.players[1].status;
+						oppStatus = gameStatus.players[0].status;
+						myName = gameStatus.players[1].name;
+						oppName = gameStatus.players[0].name;
+					}
+				}else{
+					myName = gameStatus.players[0].name;
+					console.log('myName: ' + myName);
+					myStatus = gameStatus.players[0].status;
+					oppName = '';
+					oppStatus = gameStatus.players[0].status;
 				}
 
-				if(first == 'true'){
-					myStatus = gameStatus.players[0].status;
-					oppStatus = gameStatus.players[1].status;
-					myName = gameStatus.players[0].name;
-					oppName = gameStatus.players[1].name;
-				}else{
-					myStatus = gameStatus.players[1].status;
-					oppStatus = gameStatus.players[0].status;
-					myName = gameStatus.players[1].name;
-					oppName = gameStatus.players[0].name;
-				}
-				
 				// 주사위
 				if(dice.length == 0){
 					for(let index=1; index<=5; index++){
@@ -371,12 +394,14 @@
 						'display' : 'none'
 					});
 					// 턴 표시
-					$('#p1name').css({
-						'background-color' : 'transparent'
-					});
-					$('#p2name').css({
-						'background-color' : 'green'
-					});
+					if(active == 'true'){
+						$('#p1name').css({
+							'background-color' : 'transparent'
+						});
+						$('#p2name').css({
+							'background-color' : 'green'
+						});
+					}
 				}
 			}
 			
@@ -399,17 +424,10 @@
 
 			socket.send('gameID@' + gameID + '@reroll@' + indexes);
 		});
-		
-		// 방 입장
-		$(document).on('click', '#room', function() {
-			socket.send('enter@' + $(this).attr('gameID'));
-			$(document).off('click', '#room');
-		});
-		
+
 		// 방 퇴장(기권)
 		$(document).on('click', '#exit', function(){
-			socket.send('gameID@' + gameID + '@exit@');
-			$()
+			socket.send('exit@');
 		});
 		
 		// 웹소켓 테스트
@@ -451,7 +469,7 @@
 		font-size: 32px;
 	}
 	
-	#room {
+	.room {
 		display: relative;
 		border: 1px solid;
 		width: 800px;
@@ -510,98 +528,99 @@
 					
 					<tr>
 						<td></td>
-						<td id="p1name">player1</td>
-						<td id="p2name">player2</td>
+						<td id="p1name" separator="td">player1</td>
+						<td id="p2name" separator="td">player2</td>
 					</tr>
 				
 					<tr>
 						<td> <i class="fa-solid fa-dice-one"></i> Aces</td>
-						<td id="p1aces" act="act"></td>
-						<td id="p2aces"></td> 
+						<td id="p1aces" act="act" separator="td"></td>
+						<td id="p2aces" separator="td"></td> 
 					</tr>
 					
 					<tr>
 						<td> <i class="fa-solid fa-dice-two"></i> Twos</td>
-						<td id="p1twos" act="act"></td>
-						<td id="p2twos"></td>
+						<td id="p1twos" act="act" separator="td"></td>
+						<td id="p2twos" separator="td"></td>
 					</tr>
 					
 					<tr>
 						<td> <i class="fa-solid fa-dice-three"></i> Threes</td>
-						<td id="p1threes" act="act"></td>
-						<td id="p2threes"></td>
+						<td id="p1threes" act="act" separator="td"></td>
+						<td id="p2threes" separator="td"></td>
 					</tr>
 					
 					<tr>
 						<td> <i class="fa-solid fa-dice-four"></i> Fours</td>
-						<td id="p1fours" act="act"></td>
-						<td id="p2fours"></td>
+						<td id="p1fours" act="act" separator="td"></td>
+						<td id="p2fours" separator="td"></td>
 					</tr>
 					
 					<tr>
 						<td> <i class="fa-solid fa-dice-five"></i> Fives</td>
-						<td id="p1fives" act="act"></td>
-						<td id="p2fives" ></td>
+						<td id="p1fives" act="act" separator="td"></td>
+						<td id="p2fives" separator="td"></td>
 					</tr>
 					
 					<tr>
 						<td> <i class="fa-solid fa-dice-six"></i> Sixes</td>
-						<td id="p1sixes" act="act"></td>
-						<td id="p2sixes"></td>
+						<td id="p1sixes" act="act" separator="td"></td>
+						<td id="p2sixes" separator="td"></td>
 					</tr>
 					
 					<tr id="bonus">
 						<td>Bonus</td>
-						<td id="p1bonus"></td>
-						<td id="p2bonus"></td>
+						<td id="p1bonus" separator="td"></td>
+						<td id="p2bonus" separator="td"></td>
 					</tr>
 					
 					<tr>
 						<td>4 of a kind</td>
-						<td id="p14ofakind" act="act"></td>
-						<td id="p24ofakind"></td>
+						<td id="p14ofakind" act="act" separator="td"></td>
+						<td id="p24ofakind" separator="td"></td>
 					</tr>
 					
 					<tr>
 						<td>Full House</td>
-						<td id="p1fullhouse" act="act"></td>
-						<td id="p2fullhouse"></td>
+						<td id="p1fullhouse" act="act" separator="td"></td>
+						<td id="p2fullhouse" separator="td"></td>
 					</tr>
 					
 					<tr>
 						<td>Small straight</td>
-						<td id="p1smallstr" act="act"></td>
-						<td id="p2smallstr"></td>
+						<td id="p1smallstr" act="act" separator="td"></td>
+						<td id="p2smallstr" separator="td"></td>
 					</tr>
 					
 					<tr>
 						<td>Large straight</td>
-						<td id="p1largestr" act="act"></td>
-						<td id="p2largestr"></td>
+						<td id="p1largestr" act="act" separator="td"></td>
+						<td id="p2largestr" separator="td"></td>
 					</tr>
 					
 					<tr>
 						<td>Yacht</td>
-						<td id="p1yacht" act="act"></td>
-						<td id="p2yacht"></td>
+						<td id="p1yacht" act="act" separator="td"></td>
+						<td id="p2yacht" separator="td"></td>
 					</tr>
 					
 					<tr>
 						<td>Choice</td>
-						<td id="p1choice" act="act"></td>
-						<td id="p2choice"></td>
+						<td id="p1choice" act="act" separator="td"></td>
+						<td id="p2choice" separator="td"></td>
 					</tr>
 					
 					<tr id="total">
 						<td>Total</td>
-						<td id="p1total"></td>
-						<td id="p2total"></td>
+						<td id="p1total" separator="td"></td>
+						<td id="p2total" separator="td"></td>
 					</tr>
 				</table>
 			</div>
 			
 			<button id="wsTest">웹소켓 테스트</button>
 			<button id="serverStatus">서버 상태정보 테스트</button>
+			<button id="exit">게임방 나가기</button>
 		</div>
 	</div>
 </body>

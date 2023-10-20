@@ -74,6 +74,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		
 		// 메시지
 		String strMsg = message.getPayload().toString();
+		System.out.println(strMsg);
 		// 요청 헤더
 		String header = strMsg.split("@")[0];
 
@@ -110,6 +111,8 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 			session.sendMessage(new TextMessage("gameID@" + uuid.toString()));
 			// 클라이언트에게 차례 전송
 			session.sendMessage(new TextMessage("first@true"));
+			// 클라이언트에게 대기중인 게임방 상태 전송
+			session.sendMessage(new TextMessage("game_status@" + newGame.toJSON()));
 		}
 		
 		// 게임방에 참가요청
@@ -130,6 +133,8 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 					player.setFirst(false);
 					player.setGameID(gameID);
 					game.getPlayers().put(session, player);
+					game.setActive(true);
+					// 참가한 플레이어에게 배정된 정보 전송
 					session.sendMessage(new TextMessage("gameID@" + game.getGameID()));
 					session.sendMessage(new TextMessage("first@false"));
 					// 양측 플레이어에게 게임방 상태 전송
@@ -151,13 +156,19 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 			String request = strMsg.split("@")[2];
 			int turn = game.getTurn();
 			boolean isValidTurn = false;
+			boolean isValidDice = false;
+			boolean isValidSel = false;
 			
 			// 옳은 턴인지 판별
-			if(player.isFirst() && turn % 2 == 1) isValidTurn = true;
-			if(!player.isFirst() && turn % 2 == 0) isValidTurn = true;
+			if(player.isFirst() && turn % 2 == 1 && game.isActive()) isValidTurn = true;
+			if(!player.isFirst() && turn % 2 == 0 && game.isActive()) isValidTurn = true;	
+			// 옳은 주사위 배열을 갖고있는지 판별
+			if(game.getDice().size() == 5) isValidDice = true;
+			// 옳은 득점옵션 선택 요청인지 판별
+			if(isValidTurn && isValidDice) isValidSel = true;
 			
 			// 득점옵션 선택 요청인 경우
-			if(isValidTurn && request.equals("select")) {
+			if(isValidSel && request.equals("select")) {
 				String option = strMsg.split("@")[3];
 				int result = player.updateStatus(option, game.getDice());
 
@@ -209,7 +220,19 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 					pSession.sendMessage(new TextMessage("game_status@" + game.toJSON()));
 				}	
 			}
+		}
+		
+		// 게임방에서 나가기 요청
+		if(header.equals("exit")) {
+			Player player = this.players.get(session);
 			
+			// 플레이어가 접속해있던 방 제거
+			String gameId = player.getGameID();
+			synchronized (games) {
+				this.games.remove(gameId);
+			}
+			player.init();
+			session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus()));
 		}
 	}
 
@@ -222,8 +245,6 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
 		// TODO Auto-generated method stub	
-		System.out.println("ws세션종료");
-		
 		Player player = this.players.get(session);
 		
 		// 플레이어가 접속해있던 방 제거
@@ -236,12 +257,6 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		synchronized (players) {
 			players.remove(session);
 		}
-		
-		// test
-		for(Player p : this.players.values()) {
-			p.getWsSession().sendMessage(new TextMessage("한놈 나감"));
-		}
-		
 	}
 
 	@Override
