@@ -5,7 +5,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import com.games.models.yahtzee.YahtzeeWebsocketHandler;
+import com.games.models.yacht.YachtWebsocketHandler;
 
 @Configuration
 @EnableWebSocket
@@ -14,7 +14,7 @@ public class GamesWebsocketConfig implements WebSocketConfigurer {
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		// TODO Auto-generated method stub
-		registry.addHandler(new YahtzeeWebsocketHandler(), "/yahtzeeWS").setAllowedOrigins("*");
+		registry.addHandler(new YachtWebsocketHandler(), "/yachtWS").setAllowedOrigins("*");
 	}
 
 }
