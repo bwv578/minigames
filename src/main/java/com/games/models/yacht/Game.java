@@ -84,8 +84,6 @@ public class Game {
 		for(Player player : this.players.values()) {
 			sbResult.append("{");
 			sbResult.append("\"name\": \"" + player.getName() + "\",");
-			sbResult.append("\"wsSession\": \"" + player.getWsSession() + "\",");
-			sbResult.append("\"opponent\": \"" + player.getOpponent() + "\",");
 			sbResult.append("\"status\": {");
 			sbResult.append("\"aces\": \"" + player.getStatus().get("aces") + "\",");
 			sbResult.append("\"twos\": \"" + player.getStatus().get("twos") + "\",");
