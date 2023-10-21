@@ -5,10 +5,11 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>Yacht</title>
 </head>
 <!-- Jquery -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+<!-- font awesome -->
 <script src="https://kit.fontawesome.com/b908b5678e.js" crossorigin="anonymous"></script>
 <script type="text/javascript">
 
@@ -403,6 +404,10 @@
 						});
 					}
 				}
+			}
+			// 상대방 연결 끊김 
+			if(header == 'opp_disconnected'){
+				alert('상대방이 게임에서 나갔습니다');
 			}
 		};
 		

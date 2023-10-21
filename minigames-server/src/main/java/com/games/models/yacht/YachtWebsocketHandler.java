@@ -222,6 +222,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		// 게임방에서 나가기 요청
 		if(header.equals("exit")) {
 			Player player = this.players.get(session);
+			Player opponent = this.players.get(player.getOpponent());
 			
 			// 플레이어가 접속해있던 방 제거
 			String gameId = player.getGameID();
@@ -229,6 +230,12 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 				this.games.remove(gameId);
 			}
 			player.init();
+			// 상대 플레이어에게 플레이어 퇴장 알림
+			if(opponent != null) {
+				opponent.getWsSession().sendMessage(new TextMessage("opp_disconnected@"));
+				opponent.init();
+			}
+
 			session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus()));
 		}
 	}
@@ -243,13 +250,18 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
 		// TODO Auto-generated method stub	
 		Player player = this.players.get(session);
+		Player opponent = this.players.get(player.getOpponent());
 		
 		// 플레이어가 접속해있던 방 제거
 		String gameId = player.getGameID();
 		synchronized (games) {
 			this.games.remove(gameId);
 		}
-		
+		// 같이 게임하던 상대에게 연결끊김 알림
+		if(opponent != null) {
+			opponent.getWsSession().sendMessage(new TextMessage("opp_disconnected@"));
+			opponent.init();
+		}
 		// 접속중인 플레이어 목록에서 사용자 제거
 		synchronized (players) {
 			players.remove(session);
