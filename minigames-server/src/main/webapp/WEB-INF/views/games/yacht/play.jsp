@@ -21,10 +21,6 @@
 		let gameID = '';
 		let first = '';
 
-		document.getElementById('mkRoom').onclick = function(){	
-			socket.send('create_room@' + '임의의 방제');
-		};
-		
 		socket.onmessage = function(event){
 			console.log(event.data);
 			const msg = event.data;
@@ -431,6 +427,14 @@
 			socket.send('gameID@' + gameID + '@reroll@' + indexes);
 		});
 
+		// 방 생성
+		document.getElementById('mkRoom').onclick = function(){	
+			var title = prompt('방 제목');
+			if(title != null){
+				socket.send('create_room@' + title);
+			}
+		};
+		
 		// 방 퇴장(기권)
 		$(document).on('click', '#exit', function(){
 			socket.send('exit@');
