@@ -30,10 +30,11 @@
 			const msg = event.data;
 			const header = msg.split('@')[0];
 			
-			// 방 목록 정보를 수신한 경우
+			// 서버상태 정보를 수신한 경우
 			if(header == 'server_status'){
 				$('#rooms').empty();
-				const rooms = JSON.parse(msg.split('@')[1]).rooms;
+				const status = JSON.parse(msg.split('@')[1]);
+				const rooms = status.rooms;
 				
 				$('#mainContainer').css({
 					'display' : 'none'
@@ -41,6 +42,7 @@
 				$('#contentContainer').css({
 					'display' : 'flex'
 				});
+				$('#name').html(status.myName);
 				
 				let roomsTable = '<table id="roomList">';
 				for(let index=0; index<rooms.length; index++){
@@ -447,6 +449,14 @@
 		// 새로고침
 		$(document).on('click', '#refresh', function(){
 			socket.send('server_status@');
+		});
+		
+		// 닉네임 변경
+		$(document).on('click', '#changeName', function(){
+			var altName = prompt("새로운 닉네임");
+			if(altName != null && altName != ''){
+				socket.send('set_name@' + altName);
+			}
 		});
 		
 	}

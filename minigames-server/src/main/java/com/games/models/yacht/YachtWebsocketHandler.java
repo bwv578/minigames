@@ -16,15 +16,18 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 	volatile private HashMap<String, Game> games = new HashMap<>(); // 게임ID - 게임 연결 쌍	
 	
 	// 서버 상태정보 => JSON
-	public String retrieveServerStatus() {
+	public String retrieveServerStatus(WebSocketSession session) {
 		StringBuilder sbServer = new StringBuilder();
 		Set<String> gameIDs = games.keySet();
+		Player player = this.players.get(session);
+		String myName = player.getName();
 		
 		sbServer.append("{");
+		sbServer.append("\"myName\": \"" + myName + "\", ");
 		sbServer.append("\"playerNum\": \"" + this.players.values().size() + "\", ");
 		sbServer.append("\"connectedPlayers\": [");
-		for(Player player : this.players.values()) {
-			sbServer.append("\"" + player.getName() + "\", ");
+		for(Player p : this.players.values()) {
+			sbServer.append("\"" + p.getName() + "\", ");
 		}
 		if(this.players.values().size() != 0) sbServer.deleteCharAt(sbServer.lastIndexOf(","));
 		sbServer.append("], ");
@@ -36,8 +39,8 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 			sbServer.append("{");
 			sbServer.append("\"gameID\" : \"" + ID + "\", ");
 			sbServer.append("\"players\" : [");
-			for(Player player : game.getPlayers().values()) {
-				sbServer.append("\"" + player.getName() + "\", ");
+			for(Player p : game.getPlayers().values()) {
+				sbServer.append("\"" + p.getName() + "\", ");
 			}
 			sbServer.deleteCharAt(sbServer.lastIndexOf(","));
 			sbServer.append("], ");
@@ -62,7 +65,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		synchronized (players) {
 			players.put(session, newPlayer);
 		}	
-		session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus()));
+		session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus(session)));
 	}
 
 	@Override
@@ -82,7 +85,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		
 		// 서버 상태정보
 		if(header.equals("server_status")) {
-			session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus()));
+			session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus(session)));
 		}
 		
 		// 새로운 게임방 생성
@@ -112,9 +115,21 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 			session.sendMessage(new TextMessage("game_status@" + newGame.toJSON()));
 		}
 		
+		// 닉네임 변경요청
+		if(header.equals("set_name")) {
+			String altName = strMsg.split("@")[1];
+			Player player = this.players.get(session);
+			
+			synchronized (players) {
+				player.setName(altName);
+			}
+			// 닉네임 변경 후 갱신된 상태정보 전송
+			session.sendMessage(new TextMessage("server_status@" + retrieveServerStatus(session)));
+		}
+		
 		// 게임방에 참가요청
 		if(header.equals("enter")) {
-			String msg[] = message.getPayload().toString().split("@");
+			String msg[] = strMsg.split("@");
 			String gameID = msg[1];
 
 			synchronized (games) {
@@ -140,7 +155,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 				}else {
 					// 방이 가득 찬 경우
 					session.sendMessage(new TextMessage("full_room@"));
-					session.sendMessage(new TextMessage("server_status@" + retrieveServerStatus()));
+					session.sendMessage(new TextMessage("server_status@" + retrieveServerStatus(session)));
 				}
 			}
 		}
@@ -174,9 +189,11 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 					session.sendMessage(new TextMessage("invalid_request@"));
 				}else if(result == 1) {
 					// 게임상태 업데이트 성공
-					game.countTurn();
-					game.setRemaining(3);
-					game.initDice();
+					synchronized (games) {
+						game.countTurn();
+						game.setRemaining(3);
+						game.initDice();
+					}
 
 					for(Player p : game.getPlayers().values()) {
 						WebSocketSession pSession = p.getWsSession();
@@ -236,7 +253,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 				opponent.init();
 			}
 
-			session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus()));
+			session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus(session)));
 		}
 	}
 
