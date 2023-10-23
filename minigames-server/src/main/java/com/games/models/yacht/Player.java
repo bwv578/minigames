@@ -110,8 +110,14 @@ public class Player {
 							break;
 						}
 					}
-				}else isFullHouse = false;
-				if(isFullHouse) score = 25;
+				}else if(sameNumbers != 5) {
+					isFullHouse = false;
+				}
+				if(isFullHouse) {
+					for(int n : dice) {
+						score += n;
+					}
+				}
 			}else if(option.equals("smallstr")){
 				boolean isStr = false;
 				for(int num : dice) {
@@ -126,7 +132,7 @@ public class Player {
 						}
 					}
 				}
-				if(isStr) score = 30;
+				if(isStr) score = 15;
 			}else if(option.equals("largestr")){
 				boolean isStr = false;
 				for(int num : dice) {
@@ -141,7 +147,7 @@ public class Player {
 						}
 					}
 				}
-				if(isStr) score = 40;
+				if(isStr) score = 30;
 			}else if(option.equals("yacht")){
 				int standard = dice.get(0);
 				boolean isYacht = true;
