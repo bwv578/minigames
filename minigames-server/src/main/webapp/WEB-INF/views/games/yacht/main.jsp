@@ -22,10 +22,10 @@
 	}
 	
 	#header{
-		font-size: 48px; /* 원하는 글자 크기 설정 */
-  		font-weight: bold; /* 굵게 표시 */
-  		font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; /* 눈에 띄는 폰트 설정 */
-  		color: #333; /* 텍스트 색상 설정 */
+		font-size: 48px;
+  		font-weight: bold; 
+  		font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
+  		color: #333; 
 	}
 	
 	#rooms{
@@ -41,7 +41,7 @@
 	}
 	
 	hr {
-  		margin: 10px 0; /* 위 아래 모두 10px 여백 설정 */
+  		margin: 10px 0;
 	}
 </style>
 <body>

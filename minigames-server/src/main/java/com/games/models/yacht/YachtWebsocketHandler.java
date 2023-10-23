@@ -198,7 +198,40 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 					for(Player p : game.getPlayers().values()) {
 						WebSocketSession pSession = p.getWsSession();
 						pSession.sendMessage(new TextMessage("game_status@" + game.toJSON()));
-					}						
+					}
+					
+					// 게임이 완료된 경우
+					if(game.getTurn() == 25) {
+						Thread.sleep(3000);
+
+						Player opponent = game.getPlayers().get(player.getOpponent());
+						// 각자 총점
+						int pTotal = (Integer)player.getStatus().get("total");
+						int oTotal = (Integer)opponent.getStatus().get("total");
+						
+						// 점수 비교
+						if(pTotal > oTotal) {
+							session.sendMessage(new TextMessage("result@win"));
+							player.getOpponent().sendMessage(new TextMessage("result@defeat"));
+						}else if(pTotal < oTotal) {
+							session.sendMessage(new TextMessage("result@defeat"));
+							player.getOpponent().sendMessage(new TextMessage("result@win"));
+						}else {
+							// 무승부
+							session.sendMessage(new TextMessage("result@draw"));
+							player.getOpponent().sendMessage(new TextMessage("result@draw"));
+						}
+						
+						// 플레이어들의 status 초기화
+						synchronized (players) {
+							player.init();
+							opponent.init();
+						}
+						// 완료된 게임 제거
+						synchronized (games) {
+							this.games.remove(gameID);
+						}
+					}
 				}
 			}
 			
@@ -216,14 +249,18 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 				int[] rerollIndexes = new int[strRerollIndexes.length];
 				
 				if(strRerollIndexes.length == 0) {
-					game.roll();
+					synchronized (games) {
+						game.roll();
+					}
 					success = true;
 				}else {
 					for(int i=0; i<strRerollIndexes.length; i++) {
 						rerollIndexes[i] = Integer.parseInt(strRerollIndexes[i]);
 					}
 					if(game.getDice().size() != 0) {
-						game.reroll(rerollIndexes);
+						synchronized (games) {
+							game.reroll(rerollIndexes);
+						}
 						success = true;
 					}
 				}
@@ -246,11 +283,15 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 			synchronized (games) {
 				this.games.remove(gameId);
 			}
-			player.init();
+			synchronized (players) {
+				player.init();
+			}
 			// 상대 플레이어에게 플레이어 퇴장 알림
 			if(opponent != null) {
 				opponent.getWsSession().sendMessage(new TextMessage("opp_disconnected@"));
-				opponent.init();
+				synchronized (players) {
+					opponent.init();
+				}
 			}
 
 			session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus(session)));
@@ -277,7 +318,9 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		// 같이 게임하던 상대에게 연결끊김 알림
 		if(opponent != null) {
 			opponent.getWsSession().sendMessage(new TextMessage("opp_disconnected@"));
-			opponent.init();
+			synchronized (players) {
+				opponent.init();
+			}
 		}
 		// 접속중인 플레이어 목록에서 사용자 제거
 		synchronized (players) {

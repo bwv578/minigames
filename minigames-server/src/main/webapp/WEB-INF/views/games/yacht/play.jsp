@@ -124,7 +124,6 @@
 					}
 				}else{
 					myName = gameStatus.players[0].name;
-					console.log('myName: ' + myName);
 					myStatus = gameStatus.players[0].status;
 					oppName = '';
 					oppStatus = gameStatus.players[0].status;
@@ -405,7 +404,30 @@
 			}
 			// 상대방 연결 끊김 
 			if(header == 'opp_disconnected'){
-				alert('상대방이 게임에서 나갔습니다');
+				if(confirm('상대 나감')){
+					socket.send('server_status@');
+				}else{
+					socket.send('server_status@');
+				}
+			}
+			// 게임 결과
+			if(header == 'result'){
+				const result = msg.split('@')[1];
+				let resultMessage = '';
+				
+				if(result == 'win'){
+					resultMessage = '승리';
+				}else if(result == 'defeat'){
+					resultMessage = '패배';
+				}else{
+					resultMessage = '무승부';
+				}
+				
+				if(confirm(resultMessage)){
+					socket.send('server_status@');
+				}else{
+					socket.send('server_status@');
+				}
 			}
 		};
 		
