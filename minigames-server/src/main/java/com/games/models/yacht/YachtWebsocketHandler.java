@@ -134,20 +134,19 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 			String gameID = null;
 			
 			if(msg.length > 1) gameID = msg[1]; // 특정 방 선택에 의한 참가
-			else { // 빠른참가	
-				System.out.println("빠른참가");
-				Random random = new Random();
-				Set<String> gameIDs = this.games.keySet();
-				int index;
-				
-				if(gameIDs.size() != 0) index = random.nextInt(gameIDs.size());
-				else {
+			else { 
+				// 빠른참가할 gameID 획득 시도	
+				for(Game candidate : this.games.values()) {
+					if(!candidate.isActive()) {
+						gameID = candidate.getGameID();
+						break;
+					}
+				}
+				if(gameID == null) { // 빠른참가 가능한 방이 존재하지 않는 경우
 					session.sendMessage(new TextMessage("no_room@"));
 					session.sendMessage(new TextMessage("server_status@" + retrieveServerStatus(session)));
 					return;
 				}
-				
-				gameID = (String)gameIDs.toArray()[index];
 			}
 
 			synchronized (games) {
@@ -155,7 +154,6 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 				Player player = players.get(session);
 				
 				if(game != null && game.getPlayers().size() < 2) {
-					
 					// 게임 시작
 					for(Player opponent : game.getPlayers().values()) {
 						player.setOpponent(opponent.getWsSession());
