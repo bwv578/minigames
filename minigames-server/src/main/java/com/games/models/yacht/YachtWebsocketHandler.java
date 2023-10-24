@@ -1,6 +1,7 @@
 package com.games.models.yacht;
 
 import java.util.HashMap;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -130,31 +131,62 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		// 게임방에 참가요청
 		if(header.equals("enter")) {
 			String msg[] = strMsg.split("@");
-			String gameID = msg[1];
+			String gameID = null;
+			
+			if(msg.length > 1) gameID = msg[1]; // 특정 방 선택에 의한 참가
+			else { // 빠른참가	
+				System.out.println("빠른참가");
+				Random random = new Random();
+				Set<String> gameIDs = this.games.keySet();
+				int index;
+				
+				if(gameIDs.size() != 0) index = random.nextInt(gameIDs.size());
+				else {
+					session.sendMessage(new TextMessage("no_room@"));
+					session.sendMessage(new TextMessage("server_status@" + retrieveServerStatus(session)));
+					return;
+				}
+				
+				gameID = (String)gameIDs.toArray()[index];
+			}
 
 			synchronized (games) {
 				Game game = games.get(gameID);
 				Player player = players.get(session);
 				
-				if(game.getPlayers().size() < 2) {
+				if(game != null && game.getPlayers().size() < 2) {
+					
 					// 게임 시작
 					for(Player opponent : game.getPlayers().values()) {
 						player.setOpponent(opponent.getWsSession());
 						opponent.setOpponent(session);
-					}			
+					}
+					
+					// 기본 배정요소 설정
 					player.setFirst(false);
 					player.setGameID(gameID);
 					game.getPlayers().put(session, player);
 					game.setActive(true);
+					
 					// 참가한 플레이어에게 배정된 정보 전송
 					session.sendMessage(new TextMessage("gameID@" + game.getGameID()));
 					session.sendMessage(new TextMessage("first@false"));
+					
 					// 양측 플레이어에게 게임방 상태 전송
 					session.sendMessage(new TextMessage("game_status@" + game.toJSON()));
 					player.getOpponent().sendMessage(new TextMessage("game_status@" + game.toJSON()));
-				}else {
+				
+				}else if(game != null){ 
 					// 방이 가득 찬 경우
-					session.sendMessage(new TextMessage("full_room@"));
+					if(msg.length > 1) { // 특정 방 선택 입장요청 후 방이 가득찬 경우
+						session.sendMessage(new TextMessage("full_room@"));
+						session.sendMessage(new TextMessage("server_status@" + retrieveServerStatus(session)));
+					}else { // 빠른참가 요청후 랜덤한 방 입장 시도가 실패한 경우
+						handleMessage(session, message);
+					}
+				}else {
+					// 방이 존재하지 않는 경우
+					session.sendMessage(new TextMessage("no_room@"));
 					session.sendMessage(new TextMessage("server_status@" + retrieveServerStatus(session)));
 				}
 			}

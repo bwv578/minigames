@@ -43,6 +43,10 @@
 	hr {
   		margin: 10px 0;
 	}
+	
+	#connectedPlayers{
+		margin-left: 20px;
+	}
 </style>
 <body>
 	<div id="contentContainer"> 
@@ -56,6 +60,7 @@
 			</div>
 			<hr>
 			<button id="mkRoom">방 만들기</button>
+			<button id="quick">빠른참가</button>
 			<button id="refresh">새로고침</button>
 			
 			<br><br>

@@ -73,6 +73,11 @@
 				});
 			}
 			
+			// 방에 존재하지 않는 경우
+			if(header == 'no_room'){
+				alert('방이 존재하지 않습니다');
+			}
+			
 			// 방에 입장함
 			if(header == 'gameID'){
 				gameID = msg.split('@')[1];
@@ -404,7 +409,7 @@
 			}
 			// 상대방 연결 끊김 
 			if(header == 'opp_disconnected'){
-				if(confirm('상대 나감')){
+				if(confirm('상대방이 퇴장했습니다')){
 					socket.send('server_status@');
 				}else{
 					socket.send('server_status@');
@@ -475,6 +480,11 @@
 		// 새로고침
 		$(document).on('click', '#refresh', function(){
 			socket.send('server_status@');
+		});
+		
+		// 빠른참가
+		$(document).on('click', '#quick', function(){
+			socket.send('enter@');
 		});
 		
 		// 닉네임 변경
