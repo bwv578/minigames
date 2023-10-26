@@ -92,7 +92,7 @@ public class Game {
 			sbResult.append("\"fives\" : \"" + player.getStatus().get("fives") + "\",");
 			sbResult.append("\"sixes\" : \"" + player.getStatus().get("sixes") + "\",");
 			sbResult.append("\"bonus\" : \"" + player.getStatus().get("bonus") + "\",");
-			sbResult.append("\"fourofakind\" : \"" + player.getStatus().get("4ofakind") + "\",");
+			sbResult.append("\"fourofakind\" : \"" + player.getStatus().get("fourofakind") + "\",");
 			sbResult.append("\"fullhouse\" : \"" + player.getStatus().get("fullhouse") + "\",");
 			sbResult.append("\"smallstr\" : \"" + player.getStatus().get("smallstr") + "\",");
 			sbResult.append("\"largestr\" : \"" + player.getStatus().get("largestr") + "\",");

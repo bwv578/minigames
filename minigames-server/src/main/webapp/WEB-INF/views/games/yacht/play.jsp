@@ -318,7 +318,7 @@
 							$(this).css("background-color", "transparent");
 						});
 						$('#p14ofakind').click(function(){
-							selectCombination('4ofakind');
+							selectCombination('fourofakind');
 						});
 					}
 					if(myStatus.fullhouse == ''){

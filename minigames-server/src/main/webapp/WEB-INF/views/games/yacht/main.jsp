@@ -44,9 +44,6 @@
   		margin: 10px 0;
 	}
 	
-	#connectedPlayers{
-		margin-left: 20px;
-	}
 </style>
 <body>
 	<div id="contentContainer"> 

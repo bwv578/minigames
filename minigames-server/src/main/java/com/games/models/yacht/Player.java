@@ -37,7 +37,7 @@ public class Player {
 		this.status.put("fours", "");
 		this.status.put("fives", "");
 		this.status.put("sixes", "");
-		this.status.put("4ofakind", "");
+		this.status.put("fourofakind", "");
 		this.status.put("fullhouse", "");
 		this.status.put("smallstr", "");
 		this.status.put("largestr", "");
@@ -76,7 +76,7 @@ public class Player {
 				for(int num : dice) {
 					if(num == 6) score += num;
 				}
-			}else if(option.equals("4ofakind")){
+			}else if(option.equals("fourofakind")){
 				for(int index=0; index<=1; index++) {
 					int standard = dice.get(index);
 					int sameNumbers = 0;
