@@ -45,6 +45,7 @@ public class UI_MainPopup : UI_Popup
         BindText(typeof(Texts));
         BindButton(typeof(Buttons));
 
+        // 텍스트 초기화
         GetText((int)Texts.txtRoomName1).text = string.Empty;
         GetText((int)Texts.txtRoomName2).text = string.Empty;
         GetText((int)Texts.txtRoomName3).text = string.Empty;
@@ -57,14 +58,14 @@ public class UI_MainPopup : UI_Popup
         GetText((int)Texts.txtPeople4).text = string.Empty;
         GetText((int)Texts.txtPeople5).text = string.Empty;
 
-        GetButton((int)Buttons.btnCreateRoom).gameObject.BindEvent(OnCreateRoom);
+        GetButton((int)Buttons.btnCreateRoom).gameObject.BindEvent(OnClickCreateRoom);
+        GetButton((int)Buttons.btnMatchingRoom).gameObject.BindEvent(OnClickMatching);
 
         for (int i = (int)Buttons.btnEnter1; i < (int)Buttons.btnEnter5 + 1; i++)
         {
-            GetButton((int)Buttons.btnEnter1 + i).gameObject.BindEvent(OnEnterRoom);
+            GetButton((int)Buttons.btnEnter1 + i).gameObject.BindEvent(OnClickEnterRoom);
             _dicRoomId.Add(GetButton((int)Buttons.btnEnter1 + i).gameObject.name, i);
-        }
-            
+        }            
 
         RoomInit();
 
@@ -79,6 +80,7 @@ public class UI_MainPopup : UI_Popup
         }        
     }
 
+    // 서버 통신
     private void UpdateServerStatus()
     {
         if (_oldServer.Equals(Managers.Server.PrevServer) == false)
@@ -92,11 +94,53 @@ public class UI_MainPopup : UI_Popup
         }
     }
 
+    #region 버튼 이벤트
+    // 방 입장    
+    private void OnClickEnterRoom()
+    {
+        GameObject go = EventSystem.current.currentSelectedGameObject;
+
+        if (go == null)
+            return;
+
+        _dicRoomId.TryGetValue(go.name, out int value);
+
+        Managers.Server.WebSocket.Send($"enter@{Managers.Server.ServerStatus.rooms[value].gameID}");
+        Managers.UI.ShowPopupUI<UI_GamePopup>();
+    }
+
+    // 방 생성
+    private void OnClickCreateRoom()
+    {
+        string roomName = $"Room {Random.Range(0, 999)}";
+        // TODO : 원하는 방 제목 설정 코드 필요
+
+        Managers.Server.WebSocket.Send($"create_room@{roomName}");
+
+        Managers.UI.ShowPopupUI<UI_GamePopup>();
+    }
+
+    // 랜덤 매칭
+    private void OnClickMatching()
+    {
+        if (_roomsInfo.Length == 0)
+            return;
+        else
+        {
+            int random = Random.Range(0, _roomsInfo.Length) / 1;            
+            Managers.Server.WebSocket.Send($"enter@{_roomsInfo[random].gameID}");
+            Managers.UI.ShowPopupUI<UI_GamePopup>();
+        }
+    } 
+    #endregion
+
+    // 연결된 플레이어 수
     private void ConnectedPlayers()
     {        
         GetText((int)Texts.txtServerConnect).text = $"Players :{_playerNum}";
     }   
 
+    // 방 리스트 정보
     private void RoomList()
     {        
         RoomInit();
@@ -117,6 +161,7 @@ public class UI_MainPopup : UI_Popup
         }
     }
 
+    // 방 리스트 초기화
     private void RoomInit()
     {
         ColorBlock colorBlock;
@@ -133,27 +178,5 @@ public class UI_MainPopup : UI_Popup
         }
     }
 
-    private void OnEnterRoom()
-    {
-        GameObject go = EventSystem.current.currentSelectedGameObject;
-        
-        if (go == null)
-            return;
 
-        _dicRoomId.TryGetValue(go.name, out int value);
-
-        Managers.Server.WebSocket.Send($"enter@{Managers.Server.ServerStatus.rooms[value].gameID}");
-
-        Managers.UI.ShowPopupUI<UI_GamePopup>();
-    }
-
-    private void OnCreateRoom()
-    {
-        string roomName = $"Room {Random.Range(0, 999)}";
-        // TODO : 원하는 방 제목 설정 코드 필요
-
-        Managers.Server.WebSocket.Send($"create_room@{roomName}");
-
-        Managers.UI.ShowPopupUI<UI_GamePopup>();
-    }
 }

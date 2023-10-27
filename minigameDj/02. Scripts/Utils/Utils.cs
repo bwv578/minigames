@@ -47,9 +47,9 @@ public class Utils
         return Enum.GetName(type, value);
     }
 
-    public static Array GetEnumValues(Type type)
+    public static object GetEnumParse(Type type, string value)
     {
-        return Enum.GetValues(type);
+        return Enum.Parse(type, value);
     }
 }
 
