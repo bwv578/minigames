@@ -92,13 +92,20 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		// 새로운 게임방 생성
 		if(header.equals("create_room")) {
 			String title = message.getPayload().toString().split("@")[1];
-			
+
+			// 플레이어 정의
+			Player player = players.get(session);
+			if(player.getGameID() != null) {
+				// 이미 특정 게임방에 소속된 플레이어가 중복으로 게임방 개설하는경우 차단
+				session.sendMessage(new TextMessage("invalid_request@"));
+				return;
+			}
+				
 			// 새로운 게임 고유ID 발급
 			UUID uuid = UUID.randomUUID();
-
-			// 게임객체 생성, 게임에 방 개설한 플레이어 추가
+			// 게임객체 생성
 			Game newGame = new Game(title, uuid.toString());
-			Player player = players.get(session);
+			// 플레이어 및 게임 설정
 			player.setFirst(true);
 			player.setGameID(uuid.toString());
 			newGame.getPlayers().put(session, player);
