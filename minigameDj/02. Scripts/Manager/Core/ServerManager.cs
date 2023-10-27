@@ -1,30 +1,33 @@
-using System.Collections.Generic;
-using System.Linq;
+
 using UnityEngine;
 using WebSocketSharp;
 
 public class ServerManager
 {
-    private string _prevServer = string.Empty;
-    private string _prevGame = string.Empty;
     private bool _init = false;
     private bool _isFirstTurn = false;
     private bool _isStart = false;
+    private bool _isOppOut = false;
+    private bool _isGameEnd = false;
+    private string _prevServer = string.Empty;
+    private string _prevGame = string.Empty;
+    private string _resultGame = string.Empty;
     private WebSocket _ws = null;
     private ServerStatus _serverStatus = new ServerStatus();
     private GameStatus _gameStatus = new GameStatus();    
 
-    public string PrevServer { get { return _prevServer; } }
-    public string PrevGame { get { return _prevGame; } }
     public bool IsInit { get { return _init; } }
     public bool IsFirstTurn { get { return _isFirstTurn; } }
     public bool IsStart { get { return _isStart; } }
+    public bool IsOppOut { get { return _isOppOut; } }
+    public bool IsGameEnd {  get { return _isGameEnd; } }
+    public string PrevServer { get { return _prevServer; } }
+    public string PrevGame { get { return _prevGame; } }
+    public string ResultGame { get { return _resultGame; } }
     public WebSocket WebSocket { get { return _ws; } }
     public ServerStatus ServerStatus { get { return _serverStatus; } } 
     public GameStatus GameStatus { get { return _gameStatus; } }
-   
     
-
     public void Init()
     {
         //if (_ws == null) 
@@ -33,6 +36,9 @@ public class ServerManager
         _ws.OnMessage += WS_ServerStatus;        
         _ws.OnOpen += WS_OnOpen;
         _ws.OnClose += WS_OnClose;
+
+
+        _resultGame = "You Win";
 
         _ws.Connect();
     }
@@ -59,6 +65,11 @@ public class ServerManager
             //Debug.Log($"¼­¹ö:{status}");
         }
 
+        if (header == "no_room")
+        {
+
+        }
+
         if (header == "first")
         {
             _isFirstTurn = status.Equals("true");            
@@ -72,11 +83,16 @@ public class ServerManager
             //Debug.Log($"°ÔÀÓ:{_isStart}");
         }
 
+        if (header == "result")
+        {
+            _isGameEnd = true;
+            _resultGame = status;
+        }
+
         if (header == "opp_disconnected")
         {
-            // TODO : You Win ÆË¾÷ ¹× ¹æ ÅðÀå
+            _isOppOut = true;
         }
-        
         _init = true;
     }
 

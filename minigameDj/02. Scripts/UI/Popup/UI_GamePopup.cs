@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.TextCore.Text;
 using UnityEngine.UI;
-using WebSocketSharp;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class UI_GamePopup : UI_Popup
 {
+    enum GameObjects
+    {
+        pnlResult,
+    }
+
     enum Buttons
     {
         btnaces,
@@ -36,6 +36,7 @@ public class UI_GamePopup : UI_Popup
         btnRecord,
 
         btnExit,
+        btnResultExit,
     }
 
     enum Images
@@ -87,6 +88,8 @@ public class UI_GamePopup : UI_Popup
         txtp2Total,
 
         txtRollCount,
+
+        txtResult,
     }
 
     enum DiceRecords
@@ -112,9 +115,10 @@ public class UI_GamePopup : UI_Popup
     private Sprite[] _imgDice;
     private Sprite _imgWhite;
 
+    private bool _isBoolTemp;
     private bool _isFirstTurn;
     private bool _myTurn;
-    private bool[] _player = { false, false };
+    private int _player;
     private int _rerollCount = 0;
     private int _turnCount = 0;
     private int[] _dices = { 0, 0, 0, 0, 0 };
@@ -127,7 +131,7 @@ public class UI_GamePopup : UI_Popup
     private Button[] _btnRerollDice = { null, null, null, null, null };
     private List<int> _listDice = new List<int>();
     private Dictionary<string, bool> _dicRecorded = new Dictionary<string, bool>();
-    private Dictionary<string, int> _dicGhostResult = new Dictionary<string, int>();        
+    private Dictionary<string, int> _dicGhostResult = new Dictionary<string, int>();
     private Dictionary<string, bool> _dicLockDice = new Dictionary<string, bool>()
     {
         { Utils.GetEnumName(typeof(Buttons), (int)Buttons.btnDice1), false },
@@ -142,9 +146,12 @@ public class UI_GamePopup : UI_Popup
         if (base.Init() == false)
             return false;
 
+        BindObject(typeof(GameObjects));
         BindButton(typeof(Buttons));
         BindImage(typeof(Images));
         BindText(typeof(Texts));
+        
+        GetObject((int)GameObjects.pnlResult).SetActive(false);
 
         // 리롤 주사위 흰색으로 초기화
         _imgDice = Managers.Resource.LoadAll<Sprite>("Arts/Dice/dices");
@@ -155,6 +162,7 @@ public class UI_GamePopup : UI_Popup
             GetImage(i).enabled = false;
 
         // 점수판 초기화
+        Dictionary<string, bool> dicTemp = new Dictionary<string, bool>();
         for (int i = 0; i < (int)DiceRecords.Count; i++)
         {
             string key = Utils.GetEnumName(typeof(DiceRecords), (int)DiceRecords.aces + i);
@@ -179,12 +187,18 @@ public class UI_GamePopup : UI_Popup
         GetButton((int)Buttons.btnExit).gameObject.BindEvent(OnClickExit);
         GetButton((int)Buttons.btnRoll).gameObject.BindEvent(OnClickReRoll);
         GetButton((int)Buttons.btnRecord).gameObject.BindEvent(OnClickRecord);
+        GetButton((int)Buttons.btnResultExit).gameObject.BindEvent(OnClickResultExit);
 
         return true;
     }
 
     private void Update()
     {
+        if (_isBoolTemp == false && (Managers.Server.IsOppOut || Managers.Server.IsGameEnd))
+        {
+            _isBoolTemp = true;
+            ShowResult();            
+        }
         if (Managers.Server.IsInit)
         {
             UpdateGameStatus();
@@ -207,12 +221,12 @@ public class UI_GamePopup : UI_Popup
             ClearReroll();
             UpdateTurnCheck();
             UpdateRecordBoard();
-                        
+
             // 주사위 이미지 갱신
             for (int i = 0; i < _dices.Length; i++)
             {
                 _btnRerollDice[i].GetComponent<Image>().sprite = _imgDice[_dices[i] - 1];
-                _listDice.Add(_dices[i]);                
+                _listDice.Add(_dices[i]);
             }
 
             PrevShowBoard();
@@ -221,26 +235,27 @@ public class UI_GamePopup : UI_Popup
         }
     }
 
+    // 턴 체크
     private void UpdateTurnCheck()
     {
         if (_isFirstTurn == true && (_turnCount % 2) == 1)
         {
-            _player[0] = true;
+            _player = 0;
             _myTurn = true;
         }
         else if (_isFirstTurn == false && (_turnCount % 2) == 0)
         {
-            _player[1] = true;
+            _player = 1;
             _myTurn = true;
         }
         else
             _myTurn = false;
     }
 
+    // 점수판 갱신
     private void UpdateRecordBoard()
     {
-        int count = 0;
-        // 기록 데이터 갱신
+        int diceRecord = 0;
         for (int p = 0; p < _playersInfo.Length; p++)
         {
             Dictionary<string, string> dicTemp = new Dictionary<string, string>
@@ -256,28 +271,31 @@ public class UI_GamePopup : UI_Popup
                     { "fullhouse", _playersInfo[p].status.fullhouse },
                     { "smallstr", _playersInfo[p].status.smallstr },
                     { "largestr", _playersInfo[p].status.largestr },
+                    { "yacht", _playersInfo[p].status.yacht },
                     { "bonus", _playersInfo[p].status.bonus },
                     { "total", _playersInfo[p].status.total }
                 };
-
+            if (p == 1) diceRecord = (int)DiceRecords.Count;
             for (int i = 0; i < (int)DiceRecords.Count; i++)
             {
                 string key = Utils.GetEnumName(typeof(DiceRecords), i);
                 dicTemp.TryGetValue(key, out string temp);
-
-                if (temp == null)
-                    GetText((int)Texts.txtp1Aces + count).text = $"";
+                if (temp == null || temp == "")
+                    GetText((int)Texts.txtp1Aces + i + diceRecord).text = $"";
                 else
                 {
-                    GetText((int)Texts.txtp1Aces + count).text = $"{temp}";
-                    _dicRecorded[key] = true;
+                    GetText((int)Texts.txtp1Aces + i + diceRecord).text = $"{temp}";
+                    if (_player == 0)
+                    {
+                        if (p == 0) { GetText((int)Texts.txtp1Aces + i + diceRecord).color = Color.green; _dicRecorded[key] = true; }
+                        else GetText((int)Texts.txtp1Aces + i + diceRecord).color = Color.red;
+                    }
+                    else
+                    {
+                        if (p == 0) GetText((int)Texts.txtp1Aces + i + diceRecord).color = Color.red;
+                        else { GetText((int)Texts.txtp1Aces + i + diceRecord).color = Color.green; _dicRecorded[key] = true; }
+                    }
                 }
-                _dicRecorded.TryGetValue(key, out bool value);
-                if (count < (int)DiceRecords.Count && value)
-                    GetText((int)Texts.txtp1Aces + count).color = Color.red;
-                else if (value)
-                    GetText((int)Texts.txtp1Aces + count).color = Color.green;
-                count++;
             }
         }
     }
@@ -287,7 +305,12 @@ public class UI_GamePopup : UI_Popup
     // 방 퇴장
     private void OnClickExit()
     {
-        Managers.Server.WebSocket.Send($"exit@");
+        Managers.Server.WebSocket.Send("exit@");
+        ClosePopupUI();
+    }
+
+    private void OnClickResultExit()
+    {
         ClosePopupUI();
     }
 
@@ -306,7 +329,7 @@ public class UI_GamePopup : UI_Popup
             }
 
             // 서버에 리롤 요청
-            Managers.Server.WebSocket.Send($"gameID@{_gameId}@reroll@{reroll}");            
+            Managers.Server.WebSocket.Send($"gameID@{_gameId}@reroll@{reroll}");
         }
     }
 
@@ -319,7 +342,6 @@ public class UI_GamePopup : UI_Popup
 
             _dicLockDice.TryGetValue(go.name, out bool value);
 
-            // TODO : 추후 이미지 변경
             if (value)
             {
                 _dicLockDice[go.name] = false;
@@ -341,11 +363,11 @@ public class UI_GamePopup : UI_Popup
             GameObject go = EventSystem.current.currentSelectedGameObject;
             // aces, twos ....
             string goName = go.name.ToLower().Replace("btn", string.Empty);
-            int imgIndex = (int)Enum.Parse(typeof(DiceRecords), goName);
-            
+            int imgIndex = (int)Utils.GetEnumParse(typeof(DiceRecords), goName);
+
             if (_oldCheck != null)
             {
-                int imgOld = (int)Enum.Parse(typeof(DiceRecords), _oldCheck);
+                int imgOld = (int)Utils.GetEnumParse(typeof(DiceRecords), _oldCheck);
                 // 이전 체크 fasle
                 if (_oldCheck != goName)
                     GetImage(imgOld).enabled = false;
@@ -354,6 +376,7 @@ public class UI_GamePopup : UI_Popup
             _oldCheck = goName;
             _recordName = goName;
             GetImage(imgIndex).enabled = true;
+
         }
     }
 
@@ -362,14 +385,21 @@ public class UI_GamePopup : UI_Popup
     {
         if (Managers.Server.IsStart && _recordName != null && _myTurn)
         {
-            int imgIndex = (int)Enum.Parse(typeof(DiceRecords), _oldCheck);
+            int imgIndex = (int)Utils.GetEnumParse(typeof(DiceRecords), _oldCheck);
             GetImage(imgIndex).enabled = false;
             Managers.Server.WebSocket.Send($"gameID@{_gameId}@select@{_recordName}");
+
         }
     }
     #endregion
 
+    private void ShowResult()
+    {
+        GetObject((int)GameObjects.pnlResult).SetActive(true);
+        GetText((int)Texts.txtResult).text = Managers.Server.ResultGame;
+    }
 
+    // 리롤 초기화
     private void ClearReroll()
     {
         for (int i = 0; i < _btnRerollDice.Length; i++)
@@ -380,12 +410,12 @@ public class UI_GamePopup : UI_Popup
         }
         for (int i = 0; i < (int)DiceRecords.Count; i++)
         {
-            string key = Utils.GetEnumName(typeof(DiceRecords), (int)DiceRecords.aces + i);            
+            string key = Utils.GetEnumName(typeof(DiceRecords), (int)DiceRecords.aces + i);
             _dicGhostResult[key] = 0;
         }
         if (_oldCheck != null)
         {
-            int imgIndex = (int)Enum.Parse(typeof(DiceRecords), _oldCheck);
+            int imgIndex = (int)Utils.GetEnumParse(typeof(DiceRecords), _oldCheck);
             GetImage(imgIndex).enabled = false;
         }
         _listDice.Clear();
@@ -393,44 +423,43 @@ public class UI_GamePopup : UI_Popup
         _oldCheck = null;
     }
 
+    // 미리보기 판
     private void PrevShowBoard()
     {
-        if (_dices.Length < 5)
+        if (_dices.Length < 5 || _myTurn == false)
             return;
 
         GhostScore();
 
         int player = 0;
-        if (_player[0])
+        if (_player.Equals(0))
             player = (int)Texts.txtp1Aces;
-        else if (_player[1])
+        else if (_player.Equals(1))
             player = (int)Texts.txtp2Aces;
 
-        for (int i = 0; i < (int)DiceRecords.bonus; i++, player++)
+        for (int i = 0; i < (int)DiceRecords.bonus; i++)
         {
             string key = Utils.GetEnumName(typeof(DiceRecords), i);
             _dicRecorded.TryGetValue(key, out bool value);
             if (value == false)
-            {
-                GetText(player + i).text = $"성공{_dicGhostResult[key]}";
-            }
+                GetText(player + i).text = $"{_dicGhostResult[key]}";
         }
-
-
-
     }
 
+    // 미리보기 점수 계산
     private void GhostScore()
     {
         _listDice.Sort();
+        var groupBy = _listDice.GroupBy(x => x);
 
         for (int i = 0; i <= (int)DiceRecords.sixes; i++)
         {
             string key = Utils.GetEnumName(typeof(DiceRecords), i);
-            //_dicGhostResult[key] = _listDice.GroupBy(x => i).Select(x => x.Count()).Count();            
+            if (groupBy.Any(g => g.Key == (i + 1)))
+                _dicGhostResult[key] = groupBy.Where(g => g.Key == (i + 1)).Select(x => x.Count()).First() * (i + 1);
+            else
+                _dicGhostResult[key] = 0;
         }
-        foreach (int key in _listDice.GroupBy(x => x).Select(x => x.Count()).ToArray())
-            Debug.Log(key);
 
         // choice
         {
@@ -439,15 +468,10 @@ public class UI_GamePopup : UI_Popup
         // fourofakind
         {
             int result = 0;
-            for (int i = 0; i < _listDice.Count; i++)
-            {
-                int num = _listDice[i] / (i + 1);
-
-                if (num == 5)
-                    result += _listDice[i];
-                else if (num == 4)
-                    result += _listDice[i];
-            }
+            if (groupBy.Any(g => g.Count() == 4))
+                result = groupBy.Where(g => g.Count() == 4).Select(x => x.Key).First() * 4;
+            else if (groupBy.Any(g => g.Count() == 5))
+                result = groupBy.Where(g => g.Count() == 5).Select(x => x.Key).First() * 5;
 
             _dicGhostResult["fourofakind"] = result;
         }
@@ -455,14 +479,32 @@ public class UI_GamePopup : UI_Popup
         {
             int result = 0;
 
+            if ((groupBy.Any(g => g.Count() == 2) &&
+                groupBy.Any(g => g.Count() == 3)))
+            {
+                int num1 = groupBy.Where(g => g.Count() == 2).Select(x => x.Key).First();
+                int num2 = groupBy.Where(g => g.Count() == 3).Select(x => x.Key).First();
+                result = (num1 * 2) + (num2 * 3);
+            }
+            else if (groupBy.Any(g => g.Count() == 5))
+                result = groupBy.Where(g => g.Count() == 5).Select(x => x.Key).First() * 5;
+
             _dicGhostResult["fullhouse"] = result;
         }
         // smallstr
         {
             int result = 0;
-
-            var query = _listDice.GroupBy(x => x).Where(g => g.Count() > 1).Select(x => x.Key).ToArray();
-            
+            int pass = 0;
+            for (int i = 0; i < _listDice.Count - 1; i++)
+            {
+                if (_listDice[i] + 1 == _listDice[i + 1])
+                    pass++;
+                if (pass == 3)
+                {
+                    result = 15;
+                    break;
+                }
+            }
 
             _dicGhostResult["smallstr"] = result;
         }
@@ -470,10 +512,13 @@ public class UI_GamePopup : UI_Popup
         {
             int result = 30;
 
-            for (int i = 0; i < _listDice.Count; i++)
+            for (int i = 0; i < _listDice.Count - 1; i++)
             {
-                if ((0 < i && i < 5) && _listDice[i] == 0)
+                if (_listDice[i] + 1 != _listDice[i + 1])
+                {
                     result = 0;
+                    break;
+                }
             }
 
             _dicGhostResult["largestr"] = result;
@@ -481,7 +526,9 @@ public class UI_GamePopup : UI_Popup
         // yacht
         {
             int result = 0;
-            result = _listDice.GroupBy(x => x).Where(g => g.Count() == 5).Select(x => x.Key).Count();
+
+            if (groupBy.Any(g => g.Count() == 5))
+                result = 50;
 
             _dicGhostResult["yacht"] = result;
         }
