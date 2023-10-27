@@ -306,11 +306,13 @@ public class UI_GamePopup : UI_Popup
     private void OnClickExit()
     {
         Managers.Server.WebSocket.Send("exit@");
+        Managers.Server.Clear();
         ClosePopupUI();
     }
 
     private void OnClickResultExit()
     {
+        Managers.Server.Clear();
         ClosePopupUI();
     }
 

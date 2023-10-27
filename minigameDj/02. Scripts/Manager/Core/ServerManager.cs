@@ -37,7 +37,6 @@ public class ServerManager
         _ws.OnOpen += WS_OnOpen;
         _ws.OnClose += WS_OnClose;
 
-
         _resultGame = "You Win";
 
         _ws.Connect();
@@ -63,11 +62,6 @@ public class ServerManager
             _prevServer = status;
             _serverStatus = JsonUtility.FromJson<ServerStatus>(status);
             //Debug.Log($"¼­¹ö:{status}");
-        }
-
-        if (header == "no_room")
-        {
-
         }
 
         if (header == "first")
@@ -104,5 +98,16 @@ public class ServerManager
     public void WS_OnClose(object send, CloseEventArgs e)
     {
         Debug.Log("Close");
+    }
+
+    public void Clear()
+    {
+        _isFirstTurn = false;
+        _isStart = false;
+        _isOppOut = false;
+        _isGameEnd = false;
+        _prevServer = string.Empty;
+        _prevGame = string.Empty;
+        _resultGame = "You Win";
     }
 }
