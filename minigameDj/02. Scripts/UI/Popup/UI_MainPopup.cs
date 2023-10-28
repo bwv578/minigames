@@ -8,9 +8,9 @@ public class UI_MainPopup : UI_Popup
     enum Texts
     {
         txtRoomName1,
-        txtRoomName2, 
+        txtRoomName2,
         txtRoomName3,
-        txtRoomName4, 
+        txtRoomName4,
         txtRoomName5,
         txtPeople1,
         txtPeople2,
@@ -24,8 +24,8 @@ public class UI_MainPopup : UI_Popup
     enum Buttons
     {
         btnEnter1,
-        btnEnter2, 
-        btnEnter3, 
+        btnEnter2,
+        btnEnter3,
         btnEnter4,
         btnEnter5,
         btnCreateRoom,
@@ -65,9 +65,9 @@ public class UI_MainPopup : UI_Popup
         {
             GetButton((int)Buttons.btnEnter1 + i).gameObject.BindEvent(OnClickEnterRoom);
             _dicRoomId.Add(GetButton((int)Buttons.btnEnter1 + i).gameObject.name, i);
-        }            
+        }
 
-        RoomInit();
+        //RoomInit();
 
         return true;
     }
@@ -76,8 +76,8 @@ public class UI_MainPopup : UI_Popup
     {
         if (Managers.Server.IsInit)
         {
-            UpdateServerStatus();               
-        }        
+            UpdateServerStatus();
+        }
     }
 
     // 서버 통신
@@ -127,28 +127,35 @@ public class UI_MainPopup : UI_Popup
             return;
         else
         {
-            int random = Random.Range(0, _roomsInfo.Length) / 1;            
-            Managers.Server.WebSocket.Send($"enter@{_roomsInfo[random].gameID}");
-            Managers.UI.ShowPopupUI<UI_GamePopup>();
+            while(true)
+            {
+                int random = Random.Range(0, _roomsInfo.Length) / 1;
+                if (_roomsInfo[random].players.Length != 2)
+                {
+                    Managers.Server.WebSocket.Send($"enter@{_roomsInfo[random].gameID}");
+                    Managers.UI.ShowPopupUI<UI_GamePopup>();
+                    break;
+                }
+            }            
         }
-    } 
+    }
     #endregion
 
     // 연결된 플레이어 수
     private void ConnectedPlayers()
-    {        
+    {
         GetText((int)Texts.txtServerConnect).text = $"Players :{_playerNum}";
-    }   
+    }
 
     // 방 리스트 정보
     private void RoomList()
-    {        
+    {
         RoomInit();
 
         ColorBlock colorBlock;
         for (int i = 0; i < _roomsInfo.Length; i++)
         {
-            int players = Managers.Server.ServerStatus.rooms[i].players.Length;
+            int players = _roomsInfo[i].players.Length;
             GetText((int)Texts.txtRoomName1 + i).text = _roomsInfo[i].title;
             GetText((int)Texts.txtPeople1 + i).text = $"{players}/2";
             if (players == 1)
@@ -157,7 +164,7 @@ public class UI_MainPopup : UI_Popup
                 colorBlock.normalColor = Color.white;
                 GetButton((int)Buttons.btnEnter1 + i).colors = colorBlock;
                 GetButton((int)Buttons.btnEnter1 + i).interactable = true;
-            }                
+            }
         }
     }
 
