@@ -1,7 +1,6 @@
 package com.games.models.yacht;
 
 import java.util.HashMap;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -16,63 +15,21 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 	volatile private HashMap<WebSocketSession, Player> players = new HashMap<>(); // 웹소켓 세션으로 플레이어 구분
 	volatile private HashMap<String, Game> games = new HashMap<>(); // 게임ID - 게임 연결 쌍	
 	
-	// 서버 상태정보 => JSON
-	public String retrieveServerStatus(WebSocketSession session) {
-		StringBuilder sbServer = new StringBuilder();
-		Set<String> gameIDs = games.keySet();
-		Player player = this.players.get(session);
-		String myName = player.getName();
-		
-		sbServer.append("{");
-		sbServer.append("\"myName\": \"" + myName + "\", ");
-		sbServer.append("\"playerNum\": \"" + this.players.values().size() + "\", ");
-		sbServer.append("\"connectedPlayers\": [");
-		for(Player p : this.players.values()) {
-			sbServer.append("\"" + p.getName() + "\", ");
-		}
-		if(this.players.values().size() != 0) sbServer.deleteCharAt(sbServer.lastIndexOf(","));
-		sbServer.append("], ");
-		
-		sbServer.append("\"rooms\": [");
-		for(String ID : gameIDs) {
-			Game game = games.get(ID);
-			
-			sbServer.append("{");
-			sbServer.append("\"gameID\" : \"" + ID + "\", ");
-			sbServer.append("\"players\" : [");
-			for(Player p : game.getPlayers().values()) {
-				sbServer.append("\"" + p.getName() + "\", ");
-			}
-			sbServer.deleteCharAt(sbServer.lastIndexOf(","));
-			sbServer.append("], ");
-			sbServer.append("\"title\" : \"" + game.getTitle() + "\"");
-			sbServer.append("}, ");
-		}
-		if(gameIDs.size() != 0) sbServer.deleteCharAt(sbServer.lastIndexOf(","));
-		sbServer.append("]");		
-		sbServer.append("}");
-		
-		return sbServer.toString();
-	}
-	
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-		// TODO Auto-generated method stub	
 		// 새로운 플레이어 접속 시 플레이어 목록에 추가, 게임방 목록 전송
 		Player newPlayer = new Player(session);
 		newPlayer.setName(session.getId());
-		newPlayer.setWsSession(session);
-
+		
 		synchronized (players) {
 			players.put(session, newPlayer);
-		}	
-		session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus(session)));
+		}
+		msgAllClients();
 	}
 
 	@Override
 	public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
-		// TODO Auto-generated method stub
-		
+
 		// 메시지
 		String strMsg = message.getPayload().toString();
 		System.out.println(strMsg);
@@ -82,11 +39,6 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		// 웹소켓 통신 테스트
 		if(header.equals("echo")) {
 			session.sendMessage(new TextMessage("echo@" + session.getId()));
-		}
-		
-		// 서버 상태정보
-		if(header.equals("server_status")) {
-			session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus(session)));
 		}
 		
 		// 새로운 게임방 생성
@@ -113,8 +65,8 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 			// 게임방 목록에 새 게임 추가
 			synchronized (games) {
 				games.put(uuid.toString(), newGame);
+				msgAllClients();
 			}
-			
 			// 클라이언트에게 게임ID 전송
 			session.sendMessage(new TextMessage("gameID@" + uuid.toString()));
 			// 클라이언트에게 차례 전송
@@ -131,8 +83,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 			synchronized (players) {
 				player.setName(altName);
 			}
-			// 닉네임 변경 후 갱신된 상태정보 전송
-			session.sendMessage(new TextMessage("server_status@" + retrieveServerStatus(session)));
+			msgAllClients();
 		}
 		
 		// 게임방에 참가요청
@@ -160,7 +111,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 				Game game = games.get(gameID);
 				Player player = players.get(session);
 				
-				if(game != null && game.getPlayers().size() < 2) {
+				if(game != null && game.getPlayers().size() == 1) {
 					// 게임 시작
 					for(Player opponent : game.getPlayers().values()) {
 						player.setOpponent(opponent.getWsSession());
@@ -181,6 +132,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 					session.sendMessage(new TextMessage("game_status@" + game.toJSON()));
 					player.getOpponent().sendMessage(new TextMessage("game_status@" + game.toJSON()));
 				
+					msgAllClients();
 				}else if(game != null){ 
 					// 방이 가득 찬 경우
 					if(msg.length > 1) { // 특정 방 선택 입장요청 후 방이 가득찬 경우
@@ -219,12 +171,12 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 			// 득점옵션 선택 요청인 경우
 			if(isValidSel && request.equals("select")) {
 				String option = strMsg.split("@")[3];
-				int result = player.updateStatus(option, game.getDice());
+				boolean isSuccess = player.updateStatus(option, game.getDice());
 
-				if(result == 0) {
+				if(!isSuccess) {
 					// 잘못된(조작된) 요청일 경우
 					session.sendMessage(new TextMessage("invalid_request@"));
-				}else if(result == 1) {
+				}else if(isSuccess) {
 					// 게임상태 업데이트 성공
 					synchronized (games) {
 						game.countTurn();
@@ -239,7 +191,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 					
 					// 게임이 완료된 경우
 					if(game.getTurn() == 25) {
-						Thread.sleep(3000);
+						Thread.sleep(2000);
 
 						Player opponent = game.getPlayers().get(player.getOpponent());
 						// 각자 총점
@@ -267,6 +219,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 						// 완료된 게임 제거
 						synchronized (games) {
 							this.games.remove(gameID);
+							msgAllClients();
 						}
 					}
 				}
@@ -312,26 +265,8 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		
 		// 게임방에서 나가기 요청
 		if(header.equals("exit")) {
-			Player player = this.players.get(session);
-			Player opponent = this.players.get(player.getOpponent());
-			
-			// 플레이어가 접속해있던 방 제거
-			String gameId = player.getGameID();
-			synchronized (games) {
-				this.games.remove(gameId);
-			}
-			synchronized (players) {
-				player.init();
-			}
-			// 상대 플레이어에게 플레이어 퇴장 알림
-			if(opponent != null) {
-				opponent.getWsSession().sendMessage(new TextMessage("opp_disconnected@"));
-				synchronized (players) {
-					opponent.init();
-				}
-			}
-
-			session.sendMessage(new TextMessage("server_status@" + this.retrieveServerStatus(session)));
+			disconnect(session);
+			msgAllClients();
 		}
 	}
 
@@ -344,25 +279,13 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
 		// TODO Auto-generated method stub	
-		Player player = this.players.get(session);
-		Player opponent = this.players.get(player.getOpponent());
-		
-		// 플레이어가 접속해있던 방 제거
-		String gameId = player.getGameID();
-		synchronized (games) {
-			this.games.remove(gameId);
-		}
-		// 같이 게임하던 상대에게 연결끊김 알림
-		if(opponent != null) {
-			opponent.getWsSession().sendMessage(new TextMessage("opp_disconnected@"));
-			synchronized (players) {
-				opponent.init();
-			}
-		}
+
 		// 접속중인 플레이어 목록에서 사용자 제거
+		disconnect(session);
 		synchronized (players) {
-			players.remove(session);
+			players.remove(session); 
 		}
+		msgAllClients();
 	}
 
 	@Override
@@ -371,4 +294,78 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		return false;
 	}
 
+	// 서버 상태정보 => JSON
+	public String retrieveServerStatus(WebSocketSession session) {
+		StringBuilder sbServer = new StringBuilder();
+		Set<String> gameIDs = games.keySet();
+		Player player = this.players.get(session);
+		String myName = player.getName();
+		
+		sbServer.append("{");
+		sbServer.append("\"myName\": \"" + myName + "\", ");
+		sbServer.append("\"playerNum\": \"" + this.players.values().size() + "\", ");
+		sbServer.append("\"connectedPlayers\": [");
+		for(Player p : this.players.values()) {
+			sbServer.append("\"" + p.getName() + "\", ");
+		}
+		if(this.players.values().size() != 0) sbServer.deleteCharAt(sbServer.lastIndexOf(","));
+		sbServer.append("], ");
+		
+		sbServer.append("\"rooms\": [");
+		for(String ID : gameIDs) {
+			Game game = games.get(ID);
+			
+			sbServer.append("{");
+			sbServer.append("\"gameID\" : \"" + ID + "\", ");
+			sbServer.append("\"players\" : [");
+			for(Player p : game.getPlayers().values()) {
+				sbServer.append("\"" + p.getName() + "\", ");
+			}
+			sbServer.deleteCharAt(sbServer.lastIndexOf(","));
+			sbServer.append("], ");
+			sbServer.append("\"title\" : \"" + game.getTitle() + "\"");
+			sbServer.append("}, ");
+		}
+		if(gameIDs.size() != 0) sbServer.deleteCharAt(sbServer.lastIndexOf(","));
+		sbServer.append("]");		
+		sbServer.append("}");
+		
+		return sbServer.toString();
+	}
+	
+	// 플레이어 연결끊김 
+	public void disconnect(WebSocketSession session) throws Exception{
+		Player player = this.players.get(session);
+		Player opponent = null;
+		
+		// 플레이어가 접속해있던 방 제거
+		if(player != null) {
+			opponent = this.players.get(player.getOpponent());
+			String gameId = player.getGameID();
+			
+			synchronized (players) {
+				player.init();
+			}
+			synchronized (games) {
+				this.games.remove(gameId);
+			}	
+		}
+
+		// 같이 게임하던 상대에게 연결끊김 알림
+		if(opponent != null) {
+			opponent.getWsSession().sendMessage(new TextMessage("opp_disconnected@"));
+			synchronized (players) {
+				opponent.init();
+			}
+		}
+	}
+
+	// 대기중인 플레이어들이게 서버상태 갱신/전파 
+	public void msgAllClients() throws Exception {
+		for(Player p : this.players.values()) {
+			if( p.getGameID() == null){
+				p.getWsSession().sendMessage(new TextMessage("server_status@" + retrieveServerStatus(p.getWsSession())));
+			}
+		}
+	}
 }

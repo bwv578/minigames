@@ -3,6 +3,7 @@ package com.games.models.yacht;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import lombok.Getter;
@@ -48,7 +49,7 @@ public class Player {
 	}
 	
 	// 점수계산 및 게임상태 업데이트
-	public int updateStatus(String option, ArrayList<Integer> dice) {
+	public boolean updateStatus(String option, ArrayList<Integer> dice) {
 		if(this.status.get(option).equals("")) {
 			int score = 0;
 
@@ -188,9 +189,9 @@ public class Player {
 			}
 			
 			this.status.put("total", total);
-			return 1; 
+			return true; 
 		}else {
-			return 0;
+			return false;
 		}
 	}
 }
