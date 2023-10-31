@@ -297,6 +297,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 	// 서버 상태정보 => JSON
 	public String retrieveServerStatus(WebSocketSession session) {
 		StringBuilder sbServer = new StringBuilder();
+		StringBuilder sbActive = new StringBuilder();
 		Set<String> gameIDs = games.keySet();
 		Player player = this.players.get(session);
 		String myName = player.getName();
@@ -315,17 +316,33 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 		for(String ID : gameIDs) {
 			Game game = games.get(ID);
 			
-			sbServer.append("{");
-			sbServer.append("\"gameID\" : \"" + ID + "\", ");
-			sbServer.append("\"players\" : [");
-			for(Player p : game.getPlayers().values()) {
-				sbServer.append("\"" + p.getName() + "\", ");
-			}
-			sbServer.deleteCharAt(sbServer.lastIndexOf(","));
-			sbServer.append("], ");
-			sbServer.append("\"title\" : \"" + game.getTitle() + "\"");
-			sbServer.append("}, ");
+			if(game.isActive()) {
+				sbActive.append("{");
+				sbActive.append("\"active\" : \"" + game.isActive() + "\", ");
+				sbActive.append("\"gameID\" : \"" + ID + "\", ");
+				sbActive.append("\"players\" : [");
+				for(Player p : game.getPlayers().values()) {
+					sbActive.append("\"" + p.getName() + "\", ");
+				}
+				sbActive.deleteCharAt(sbActive.lastIndexOf(","));
+				sbActive.append("], ");
+				sbActive.append("\"title\" : \"" + game.getTitle() + "\"");
+				sbActive.append("}, ");
+			}else {
+				sbServer.append("{");
+				sbServer.append("\"active\" : \"" + game.isActive() + "\", ");
+				sbServer.append("\"gameID\" : \"" + ID + "\", ");
+				sbServer.append("\"players\" : [");
+				for(Player p : game.getPlayers().values()) {
+					sbServer.append("\"" + p.getName() + "\", ");
+				}
+				sbServer.deleteCharAt(sbServer.lastIndexOf(","));
+				sbServer.append("], ");
+				sbServer.append("\"title\" : \"" + game.getTitle() + "\"");
+				sbServer.append("}, ");
+			}		
 		}
+		sbServer.append(sbActive);
 		if(gameIDs.size() != 0) sbServer.deleteCharAt(sbServer.lastIndexOf(","));
 		sbServer.append("]");		
 		sbServer.append("}");
@@ -334,7 +351,7 @@ public class YachtWebsocketHandler implements WebSocketHandler{
 	}
 	
 	// 플레이어 연결끊김 
-	public void disconnect(WebSocketSession session) throws Exception{
+	public void disconnect(WebSocketSession session) throws Exception {
 		Player player = this.players.get(session);
 		Player opponent = null;
 		

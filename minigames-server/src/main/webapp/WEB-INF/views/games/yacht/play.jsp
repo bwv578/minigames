@@ -15,8 +15,8 @@
 
 	window.onload = function(){
 	
-		//const socket = new WebSocket("ws://localhost:8080/yachtWS");
-		const socket = new WebSocket("ws://52.78.178.113:8080/yachtWS");
+		const socket = new WebSocket("ws://localhost:8080/yachtWS");
+		//const socket = new WebSocket("ws://52.78.178.113:8080/yachtWS");
 			
 		let gameID = '';
 		let first = '';
