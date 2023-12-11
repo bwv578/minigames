@@ -31,8 +31,9 @@ public class ServerManager
     public void Init()
     {
         //if (_ws == null) 
-        _ws = new WebSocket("ws://52.78.178.113:8080/yachtWS");
-
+        _ws = new WebSocket("ws://52.78.178.113:8080/yachtWS");        
+        //_ws = new WebSocket("ws://182.218.50.143:8080/yachtWS");
+                
         _ws.OnMessage += WS_ServerStatus;        
         _ws.OnOpen += WS_OnOpen;
         _ws.OnClose += WS_OnClose;
@@ -40,13 +41,15 @@ public class ServerManager
         _resultGame = "You Win";
 
         _ws.Connect();
+        
     }
+
 
     public void OnUpdate()
     {
         if (_ws.ReadyState != WebSocketState.Closed)
         {
-            _ws.Send("server_status@");
+            //_ws.Send("server_status@");
             if (Input.GetKeyDown(KeyCode.A))
                 _ws.Close();
         }

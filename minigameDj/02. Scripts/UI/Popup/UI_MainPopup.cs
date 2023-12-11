@@ -1,10 +1,17 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using WebSocketSharp;
 
 public class UI_MainPopup : UI_Popup
 {
+    enum GameObjects
+    {
+        pnlInitConnect,
+    }
+
     enum Texts
     {
         txtRoomName1,
@@ -19,6 +26,7 @@ public class UI_MainPopup : UI_Popup
         txtPeople5,
 
         txtServerConnect,
+        txtUserName,
     }
 
     enum Buttons
@@ -30,10 +38,13 @@ public class UI_MainPopup : UI_Popup
         btnEnter5,
         btnCreateRoom,
         btnMatchingRoom,
-    }
+
+        btnSetName,
+    }    
 
     private int _playerNum = 0;
     private string _oldServer = string.Empty;
+    private string _inputFieldName = string.Empty;
     private RoomInfo[] _roomsInfo = null;
     private Dictionary<string, int> _dicRoomId = new Dictionary<string, int>();
 
@@ -42,6 +53,7 @@ public class UI_MainPopup : UI_Popup
         if (base.Init() == false)
             return false;
 
+        BindObject(typeof(GameObjects));
         BindText(typeof(Texts));
         BindButton(typeof(Buttons));
 
@@ -58,16 +70,17 @@ public class UI_MainPopup : UI_Popup
         GetText((int)Texts.txtPeople4).text = string.Empty;
         GetText((int)Texts.txtPeople5).text = string.Empty;
 
+        GetText((int)Texts.txtUserName).text = string.Empty;
+
+        GetButton((int)Buttons.btnSetName).gameObject.BindEvent(OnClickSetName);
         GetButton((int)Buttons.btnCreateRoom).gameObject.BindEvent(OnClickCreateRoom);
-        GetButton((int)Buttons.btnMatchingRoom).gameObject.BindEvent(OnClickMatching);
+        GetButton((int)Buttons.btnMatchingRoom).gameObject.BindEvent(OnClickMatchingRoom);        
 
         for (int i = (int)Buttons.btnEnter1; i < (int)Buttons.btnEnter5 + 1; i++)
         {
             GetButton((int)Buttons.btnEnter1 + i).gameObject.BindEvent(OnClickEnterRoom);
             _dicRoomId.Add(GetButton((int)Buttons.btnEnter1 + i).gameObject.name, i);
         }
-
-        //RoomInit();
 
         return true;
     }
@@ -94,7 +107,15 @@ public class UI_MainPopup : UI_Popup
         }
     }
 
-    #region 버튼 이벤트
+    #region 버튼 이벤트    
+    private void OnClickSetName()
+    {
+        _inputFieldName = GetText((int)Texts.txtUserName).text;
+        Managers.Server.WebSocket.Send($"set_name@{_inputFieldName}");
+        GetObject((int)GameObjects.pnlInitConnect).SetActive(false);
+
+    }
+
     // 방 입장    
     private void OnClickEnterRoom()
     {
@@ -112,8 +133,7 @@ public class UI_MainPopup : UI_Popup
     // 방 생성
     private void OnClickCreateRoom()
     {
-        string roomName = $"Room {Random.Range(0, 999)}";
-        // TODO : 원하는 방 제목 설정 코드 필요
+        string roomName = $"Room {Random.Range(0, 999)}";        
 
         Managers.Server.WebSocket.Send($"create_room@{roomName}");
 
@@ -121,7 +141,7 @@ public class UI_MainPopup : UI_Popup
     }
 
     // 랜덤 매칭
-    private void OnClickMatching()
+    private void OnClickMatchingRoom()
     {
         if (_roomsInfo.Length == 0)
             return;
@@ -152,6 +172,7 @@ public class UI_MainPopup : UI_Popup
     {
         RoomInit();
 
+        // 
         ColorBlock colorBlock;
         for (int i = 0; i < _roomsInfo.Length; i++)
         {

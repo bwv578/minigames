@@ -1,11 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 
 public class UI_GamePopup : UI_Popup
 {
+    #region BindingTypes
     enum GameObjects
     {
         pnlResult,
@@ -90,6 +93,9 @@ public class UI_GamePopup : UI_Popup
         txtRollCount,
 
         txtResult,
+
+        txtPlayerName1,
+        txtPlayerName2,
     }
 
     enum DiceRecords
@@ -110,7 +116,8 @@ public class UI_GamePopup : UI_Popup
         total,
 
         Count,
-    }
+    } 
+    #endregion
 
     private Sprite[] _imgDice;
     private Sprite _imgWhite;
@@ -150,7 +157,7 @@ public class UI_GamePopup : UI_Popup
         BindButton(typeof(Buttons));
         BindImage(typeof(Images));
         BindText(typeof(Texts));
-        
+
         GetObject((int)GameObjects.pnlResult).SetActive(false);
 
         // 리롤 주사위 흰색으로 초기화
@@ -182,6 +189,7 @@ public class UI_GamePopup : UI_Popup
             _btnRerollDice[i].GetComponent<Image>().sprite = _imgWhite;
         }
 
+        // 버튼 입력 이벤트
         for (int i = (int)Buttons.btnaces; i < (int)Buttons.btnyacht + 1; i++)
             GetButton((int)Buttons.btnaces + i).gameObject.BindEvent(OnClickBoard);
         GetButton((int)Buttons.btnExit).gameObject.BindEvent(OnClickExit);
@@ -189,6 +197,7 @@ public class UI_GamePopup : UI_Popup
         GetButton((int)Buttons.btnRecord).gameObject.BindEvent(OnClickRecord);
         GetButton((int)Buttons.btnResultExit).gameObject.BindEvent(OnClickResultExit);
 
+        UpdatePlayer();
         return true;
     }
 
@@ -197,7 +206,7 @@ public class UI_GamePopup : UI_Popup
         if (_isBoolTemp == false && (Managers.Server.IsOppOut || Managers.Server.IsGameEnd))
         {
             _isBoolTemp = true;
-            ShowResult();            
+            ShowResult();
         }
         if (Managers.Server.IsInit)
         {
@@ -229,9 +238,19 @@ public class UI_GamePopup : UI_Popup
                 _listDice.Add(_dices[i]);
             }
 
-            PrevShowBoard();
+            UpdatePlayer();
 
+            PrevShowBoard();
             GetText((int)Texts.txtRollCount).text = $"Roll : {(_rerollCount)}";
+        }
+    }
+
+    // 플레이어 입장시 이름 업데이트
+    private void UpdatePlayer()
+    {
+        for (int i = 0; i < Managers.Server.GameStatus.players.Length; i++)
+        {
+            GetText((int)Texts.txtPlayerName1 + i).text = Managers.Server.GameStatus.players[i].name;
         }
     }
 
@@ -452,6 +471,7 @@ public class UI_GamePopup : UI_Popup
     private void GhostScore()
     {
         _listDice.Sort();
+
         var groupBy = _listDice.GroupBy(x => x);
 
         for (int i = 0; i <= (int)DiceRecords.sixes; i++)
@@ -496,19 +516,26 @@ public class UI_GamePopup : UI_Popup
         // smallstr
         {
             int result = 0;
-            int pass = 0;
-            for (int i = 0; i < _listDice.Count - 1; i++)
+            bool isStr = false;
+            foreach (int num in _dices)
             {
-                if (_listDice[i] + 1 == _listDice[i + 1])
-                    pass++;
-                if (pass == 3)
-                {
-                    result = 15;
+                if (isStr)
                     break;
+                int next = num + 1;
+                for (int i = 1; i <= 3; i++)
+                {
+                    if (_dices.Contains(next))
+                    {
+                        next++;
+                        if (i == 3) isStr = true;
+                    }
+                    else
+                        break;
                 }
-            }
+                if (isStr) result = 15;
 
-            _dicGhostResult["smallstr"] = result;
+                _dicGhostResult["smallstr"] = result;
+            }
         }
         // largestr
         {
@@ -535,5 +562,4 @@ public class UI_GamePopup : UI_Popup
             _dicGhostResult["yacht"] = result;
         }
     }
-
 }
